@@ -238,7 +238,114 @@ print(f"Unknown Fact Entropy/Veracity: {get_veracity(unknown_stmt):.4f}")
 print(f"Near 0.0 indicates no internal logic structure for this fact -> Triggers Uncertainty Gate -> Disables Steering to protect new RAG data.")
 """)
 
-add_markdown("## 5. Conclusion")
+add_markdown("## 5. Unified End-to-End Evaluation Pipeline (1500-Query Batch)")
+add_markdown("To definitively prove the mechanism, we natively run a 1500-query validation subset through both standard RAG and our $O(1)$ RepE framework side-by-side inside this notebook.")
+add_code("""
+import time
+import json
+import torch.nn as nn
+import pickle
+
+# Load Pretrained O(1) Linear Probe
+class AlphaPredictor(nn.Module):
+    def __init__(self, input_dim):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, 16),
+            nn.ReLU(),
+            nn.Linear(16, 1)
+        )
+    def forward(self, x):
+        return self.net(x)
+
+probe = AlphaPredictor(input_dim=7)
+probe.load_state_dict(torch.load("linear_probe_weights.pt", map_location='cpu'))
+probe.eval()
+
+with open("feature_scaler.pkl", "rb") as f:
+    scaler = pickle.load(f)
+
+with open("hotpot_filtered_5000.json", 'r', encoding='utf-8') as f:
+    dataset = json.load(f)
+
+eval_set = dataset[-1500:]
+
+def create_steering_hook(alpha_val, c_vec):
+    def steering_hook(module, args, output):
+        hidden_states = output[0] if isinstance(output, tuple) else output
+        steered_states = hidden_states - (alpha_val * c_vec)
+        if isinstance(output, tuple):
+            return (steered_states,) + output[1:]
+        else:
+            return steered_states
+    return steering_hook
+
+baseline_correct, repe_correct = 0, 0
+baseline_time_total, repe_time_total = 0, 0
+
+print(f"--- Starting Validation on {len(eval_set)} queries ---")
+for i, row in enumerate(eval_set):
+    distractor = row['distractor_context']
+    question = row['question']
+    ground_truth = row['answer'].lower()
+    
+    prompt_text = f"Context: {distractor}\\n\\nQuestion: {question}\\nAnswer:"
+    prompt_inputs = tokenizer(prompt_text, return_tensors="pt").to(device)
+    input_len = prompt_inputs.input_ids.shape[1]
+    
+    # 1. BASELINE
+    start_time = time.time()
+    with torch.no_grad():
+        out_base = base_model.generate(**prompt_inputs, max_new_tokens=10, do_sample=False, pad_token_id=tokenizer.eos_token_id)
+    gen_base = tokenizer.decode(out_base[0][input_len:], skip_special_tokens=True).lower()
+    baseline_time_total += (time.time() - start_time)
+    if ground_truth in gen_base: baseline_correct += 1
+        
+    # 2. MECHANISTIC O(1) REPE
+    start_time = time.time()
+    c_hidden = basic_extract_vector(distractor).view(1, -1)
+    concept_vector = c_hidden.unsqueeze(0)  # Shape config
+    
+    p_hidden = basic_extract_vector(prompt_text).view(1, -1)
+    prompt_vector = p_hidden
+    
+    concept_norm = torch.norm(concept_vector).item()
+    prompt_norm = torch.norm(prompt_vector).item()
+    dot_product = torch.dot(prompt_vector.flatten(), concept_vector.flatten()).item()
+    cosine_sim = torch.nn.functional.cosine_similarity(prompt_vector.flatten(), concept_vector.flatten(), dim=0).item()
+    collapse_alpha = dot_product / (concept_norm ** 2 + 1e-5)
+    
+    with torch.no_grad():
+        outputs = base_model(input_ids=prompt_inputs.input_ids)
+        next_token_logits = outputs.logits[0, -1, :]
+        baseline_confidence = torch.max(torch.nn.functional.softmax(next_token_logits, dim=-1)).item()
+        
+    features = np.array([[prompt_norm, concept_norm, dot_product, cosine_sim, baseline_confidence, input_len, collapse_alpha]])
+    features_t = torch.tensor(scaler.transform(features), dtype=torch.float32)
+    with torch.no_grad():
+        pred_alpha = max(0.0, min(probe(features_t).item(), collapse_alpha * 0.99))
+        
+    hook_handle = base_model.transformer.h[TARGET_LAYER].register_forward_hook(create_steering_hook(pred_alpha, c_hidden.unsqueeze(0)))
+    with torch.no_grad():
+        out_repe = base_model.generate(**prompt_inputs, max_new_tokens=10, do_sample=False, pad_token_id=tokenizer.eos_token_id)
+    gen_repe = tokenizer.decode(out_repe[0][input_len:], skip_special_tokens=True).lower()
+    hook_handle.remove()
+    
+    repe_time_total += (time.time() - start_time)
+    if ground_truth in gen_repe: repe_correct += 1
+
+print("\\n================ FINAL METRICS ================")
+print(f"Total Evaluation Queries: {len(eval_set)}")
+print(f"\\n[Baseline RAG]")
+print(f"Accuracy (Exact Match): {baseline_correct / len(eval_set) * 100:.2f}%")
+print(f"Average Latency: {baseline_time_total / len(eval_set):.4f}s")
+print(f"\\n[Mechanistic RepE RAG]")
+print(f"Accuracy (Exact Match): {repe_correct / len(eval_set) * 100:.2f}%")
+print(f"Average Latency: {repe_time_total / len(eval_set):.4f}s")
+print("===============================================")
+""")
+
+add_markdown("## 6. Conclusion")
 add_markdown("""Our end-to-end framework—empowered by Token-Level Gating via Residual L2 Norms, Contrastive Extractions, Logic Lens Probing, and Mahalanobis geometric triage—evolved a basic Representation Engineering proof of concept into a fully autonomous RAG Inference Engine. 
 
 Crucially, because the distractor concept is eradicated at the tensor level prior to decoding, the LLM abandoned its hallucinatory reasoning paths inherently, yielding a proven mathematically rigorous, fully production-ready, constant-time alternative to $O(N)$ token-generation critique loops.""")

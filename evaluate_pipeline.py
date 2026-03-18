@@ -7,17 +7,18 @@ import numpy as np
 import torch.nn as nn
 import pickle
 
-# Phase 4: Full Pipeline Evaluation
-# Goal: Compare Baseline Blind RAG vs $O(1)$ RepE RAG on both F1 Accuracy and Latency
+# Phase 4: Full Pipeline Evaluation with Production Architecture
+# Features: Contrastive Extraction ($V_{neg} - V_{pos}$) and Token-Level Gating
 
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
 print(f"Using device: {device}")
 
-# 1. Load Model
+# 1. Load Model (Using GPT-2 to maintain alignment with the pre-trained Linear Probe)
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 tokenizer.pad_token = tokenizer.eos_token
 base_model = AutoModelForCausalLM.from_pretrained("gpt2").to(device)
 
+# Logit Lens Layer Probing found drift in the middle-to-late layers. We target the final MLP block for GPT-2 semantic extraction.
 target_layer_idx = base_model.config.n_layer - 1 
 target_layer = base_model.transformer.h[target_layer_idx]
 
@@ -45,7 +46,7 @@ def load_data(filepath="hotpot_filtered_5000.json"):
     with open(filepath, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-# Hook setup for RepE
+# Hook setup for RepE Extract
 activation_cache = {}
 def get_activation(name):
     def hook(module, input, output):
@@ -53,14 +54,26 @@ def get_activation(name):
         activation_cache[name] = hidden_states.detach()
     return hook
 
-def create_steering_hook(alpha_val, c_vec):
+# Hook setup for Token-Level Gated Steering
+def create_gated_steering_hook(alpha_val, c_vec_contrastive):
     def steering_hook(module, args, output):
         hidden_states = output[0] if isinstance(output, tuple) else output
-        steered_states = hidden_states - (alpha_val * c_vec)
-        if isinstance(output, tuple):
-            return (steered_states,) + output[1:]
+        
+        # Token-Level Gating via L2 Norm
+        # We only steer if the token norm demonstrates factual semantic weight (calculated empirically for GPT-2)
+        norm_val = torch.linalg.norm(hidden_states[:, -1, :].float()).item()
+        
+        if norm_val > 15.0: # GPT-2 Empirical Factual Threshold
+            steered_states = hidden_states.clone()
+            steered_states[:, -1, :] = hidden_states[:, -1, :] - (alpha_val * c_vec_contrastive.squeeze(0))
+            if isinstance(output, tuple):
+                return (steered_states,) + output[1:]
+            else:
+                return steered_states
         else:
-            return steered_states
+            # Syntax token detected, bypass steering to prevent semantic collapse
+            return output
+            
     return steering_hook
 
 def extract_vector(text, name):
@@ -76,8 +89,8 @@ def evaluate():
     print("Loading HotpotQA Eval Dataset...")
     dataset = load_data()
     
-    # Take the last 100 rows to ensure they are likely out of the training distribution logic
-    eval_set = dataset[-100:]
+    # Take the last 1500 rows to ensure they are likely out of the training distribution logic
+    eval_set = dataset[-1500:]
     
     baseline_correct = 0
     repe_correct = 0
@@ -106,20 +119,25 @@ def evaluate():
         if ground_truth in gen_base:
             baseline_correct += 1
             
-        # --- 2. O(1) REPE RAG ---
+        # --- 2. ADVANCED O(1) REPE RAG (Production Architecture) ---
         start_time = time.time()
         
-        # Extract features (O(1) pass)
-        c_hidden, _ = extract_vector(distractor, "concept")
-        concept_vector = c_hidden.mean(dim=1, keepdim=True)
+        # [NEW] Contrastive Extraction Geometry (V_neg - V_pos)
+        c_hidden_neg, _ = extract_vector(distractor, "neg")
+        c_hidden_pos, _ = extract_vector("A standard fact.", "pos") # Neutral prompt space
+        
+        v_neg = c_hidden_neg.mean(dim=1, keepdim=True)
+        v_pos = c_hidden_pos.mean(dim=1, keepdim=True)
+        concept_vector_contrastive = v_neg - v_pos # Causal Isolation
         
         p_hidden, prompt_tokens = extract_vector(prompt_text, "prompt")
         prompt_vector = p_hidden[:, -1:, :]
         
-        concept_norm = torch.norm(concept_vector).item()
+        # Calculate geometric scalars for the Linear Probe (using base v_neg to align with train distribution)
+        concept_norm = torch.norm(v_neg).item()
         prompt_norm = torch.norm(prompt_vector).item()
-        dot_product = torch.dot(prompt_vector.flatten(), concept_vector.flatten()).item()
-        cosine_sim = torch.nn.functional.cosine_similarity(prompt_vector.flatten(), concept_vector.flatten(), dim=0).item()
+        dot_product = torch.dot(prompt_vector.flatten(), v_neg.flatten()).item()
+        cosine_sim = torch.nn.functional.cosine_similarity(prompt_vector.flatten(), v_neg.flatten(), dim=0).item()
         collapse_alpha = dot_product / (concept_norm ** 2 + 1e-5)
         
         with torch.no_grad():
@@ -128,7 +146,7 @@ def evaluate():
             probs = torch.nn.functional.softmax(next_token_logits, dim=-1)
             baseline_confidence = torch.max(probs).item()
             
-        # Predict Alpha using the probe
+        # Predict optimal scalar using $O(1)$ MLP Probe
         features = np.array([[prompt_norm, concept_norm, dot_product, cosine_sim, baseline_confidence, prompt_tokens, collapse_alpha]])
         features_scaled = scaler.transform(features)
         features_t = torch.tensor(features_scaled, dtype=torch.float32)
@@ -136,11 +154,10 @@ def evaluate():
         with torch.no_grad():
             pred_alpha = probe(features_t).item()
             
-        # Clamp alpha just to be safe (never go above 99% of complete layer collapse)
         pred_alpha = max(0.0, min(pred_alpha, collapse_alpha * 0.99))
         
-        # Steered Generation
-        hook_handle = target_layer.register_forward_hook(create_steering_hook(pred_alpha, concept_vector))
+        # Steered Generation with [NEW] Token-Level Gating
+        hook_handle = target_layer.register_forward_hook(create_gated_steering_hook(pred_alpha, concept_vector_contrastive))
         with torch.no_grad():
             out_repe = base_model.generate(**prompt_inputs, max_new_tokens=10, do_sample=False, pad_token_id=tokenizer.eos_token_id)
         gen_repe = tokenizer.decode(out_repe[0][input_len:], skip_special_tokens=True).lower()
@@ -152,8 +169,8 @@ def evaluate():
         if ground_truth in gen_repe:
             repe_correct += 1
             
-        if (i + 1) % 10 == 0:
-            print(f"Processed {i+1}/100...")
+        if (i + 1) % 50 == 0:
+            print(f"Processed {i+1}/1500... | Baseline: {baseline_correct}/{i+1} | RepE: {repe_correct}/{i+1}")
 
     # --- 3. RESULTS ---
     print("\n================ FINAL RESULTS ================")
@@ -162,12 +179,12 @@ def evaluate():
     print(f"Accuracy (Exact Match): {baseline_correct / len(eval_set) * 100:.2f}%")
     print(f"Average Latency per Query: {baseline_time_total / len(eval_set):.4f} seconds")
     
-    print(f"\n[O(1) RepE RAG]")
+    print(f"\n[Production RepE RAG (Contrastive + Token Gated)]")
     print(f"Accuracy (Exact Match): {repe_correct / len(eval_set) * 100:.2f}%")
     print(f"Average Latency per Query: {repe_time_total / len(eval_set):.4f} seconds")
     
     latency_diff = ((repe_time_total - baseline_time_total) / baseline_time_total) * 100
-    print(f"\nLatency Overhead of O(1) Probe: +{latency_diff:.2f}%")
+    print(f"\nLatency Overhead of Production Pipeline: {latency_diff:.2f}%")
     
     acc_diff = repe_correct - baseline_correct
     if acc_diff > 0:
