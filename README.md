@@ -27,6 +27,14 @@ To scale this mathematically proven $O(1)$ steering mechanism to production-grad
 2. **KL-Divergence Braking:** Implementing a dynamic mathematical braking system during the generative decoding loop. It calculates the KL Divergence between Unsteered and Steered logits in real-time, defaulting to baseline logic if the steering vector risks shattering grammatical coherence.
 3. **Targeted Layer Steering:** Injecting the Negative Control Vector specifically into factual retrieval layers (e.g., $\frac{1}{4}$ to $\frac{1}{2}$ depth), preserving the LLM's deepest logic and syntax layers untouched.
 
+## Roadmap to Production-Grade Architecture
+To transition from a proof-of-concept to an enterprise system, five major refinements are architected:
+1. **Contrastive Extraction:** Evolving past PCA by subtracting a "Positive Pass" from a "Negative Pass" ($V_{neg} - V_{pos}$) to isolate pure distraction causality.
+2. **Robustness Benchmarking:** Measuring SQuAD v1.1 *Zero-Drop Accuracy* across clean, contaminated, and steered validation states.
+3. **Automated Probing:** Utilizing Logit Lens Probing via Jensen-Shannon Divergence to dynamically discover optimal steering layers across massive MoE models.
+4. **Token-Level Gating:** Decaying the alpha coefficient dynamically via Residual Stream Norms to preserve grammar on low-information tokens.
+5. **Mahalanobis Geometry:** Replacing raw Cosine Similarity clustering with Mahalanobis Distance for probabilistic multi-dimensional distractor triage.
+
 ## Execution Requirements
 Ensure you have the required dependencies (PyTorch, Hugging Face Transformers, Datasets, Pandas) installed within your `.venv`. 
 
