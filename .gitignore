@@ -1,0 +1,26 @@
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Temporary outputs (optional, leaving CSVs if needed, ignoring logs)
+*.log
+*.pdf
+# We keep pdfs if they are final, but gitignoring generated files might be good.
+# Let's keep the PDF since it's the final output the user wants to submit.
