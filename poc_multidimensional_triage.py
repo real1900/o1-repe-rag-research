@@ -4,21 +4,26 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import numpy as np
 from scipy.spatial.distance import mahalanobis
 
-print("Loading GPT-2 for Multi-Dimensional Triage Offline PoC...")
+print("Loading Llama-3.2-1B-Instruct for Multi-Dimensional Triage Production Test...")
 device = torch.device('mps' if torch.backends.mps.is_available() else 'cpu')
-tokenizer = AutoTokenizer.from_pretrained("gpt2")
+model_id = "meta-llama/Llama-3.2-1B-Instruct"
+tokenizer = AutoTokenizer.from_pretrained(model_id)
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
-model = AutoModelForCausalLM.from_pretrained("gpt2").to(device)
+model = AutoModelForCausalLM.from_pretrained(model_id).to(device)
 
 def extract_activation(text):
     inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512).to(device)
     cache = {}
     def hook(module, input, output):
         hidden_states = output[0] if isinstance(output, tuple) else output
-        cache['val'] = hidden_states[:, -1, :].detach().cpu().numpy()
+        cache['val'] = hidden_states[:, -1, :].detach().float().cpu().numpy()
     
-    layer = model.transformer.h[model.config.n_layer // 2]
+    try:
+        layer = model.transformer.h[model.config.n_layer // 2]
+    except AttributeError:
+        layer = model.model.layers[model.config.num_hidden_layers // 2]
+        
     handle = layer.register_forward_hook(hook)
     with torch.no_grad():
         model(**inputs)

@@ -181,7 +181,8 @@ for i in range(inputs.input_ids.shape[1]):
     if not token_str: token_str = "<special>"
     # Extract final hidden state for this token
     norm = torch.linalg.norm(outputs.hidden_states[-1][0, i, :].float()).item()
-    print(f"'{token_str}'{'' :<12-len(token_str)-2} | {norm:<15.4f}")
+    pad = max(0, 12 - len(token_str))
+    print(f"'{token_str}'{' ' * pad} | {norm:<15.4f}")
 
 print("\\nResult: Factual tokens ('Mariana', 'Pacific') spike in magnitude over grammatical syntax, establishing a clear threshold for dynamic Alpha braking.")
 """)
