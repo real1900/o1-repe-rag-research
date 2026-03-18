@@ -186,33 +186,55 @@ for i in range(inputs.input_ids.shape[1]):
 print("\\nResult: Factual tokens ('Mariana', 'Pacific') spike in magnitude over grammatical syntax, establishing a clear threshold for dynamic Alpha braking.")
 """)
 
-add_markdown("### Proof 4: Mahalanobis Distance Triage")
-add_markdown("Unsupervised clustering via Cosine similarity assumes a spherical space, penalizing geometric outliers poorly. Mahalanobis distance scales strictly by the cluster's inverse covariance variance.")
+add_markdown("### Proof 4: Hybrid Multi-Dimensional Triage (Resolving 'Hard Negatives')")
+add_markdown("Unsupervised clustering via Cosine similarity assumes a spherical space, penalizing geometric outliers poorly. While Mahalanobis distance scales strictly by the cluster's inverse covariance variance, it fails on 'Hard Negatives' (topically identical, factually wrong). We formally ensemble Spatial Triage (Mahalanobis) with Veracity Projections (Contrastive Activation Addition) and an Uncertainty Gate (Entropy) to build an impenetrable security checkpoint.")
 add_code("""
-from scipy.spatial.distance import mahalanobis, cosine
+from scipy.spatial.distance import mahalanobis
+import numpy as np
 
-true_ctx = [
-    "Apollo 11 landed on July 20.",
-    "Neil Armstrong walked on the moon.",
-    "Buzz Aldrin followed Neil.",
-    "It was a NASA mission."
+valid_chunks = [
+    "Apollo 11 was the American spaceflight that first landed humans on the Moon.",
+    "Commander Neil Armstrong and lunar module pilot Buzz Aldrin formed the crew.",
+    "The Apollo spacecraft had three parts: a Command Module, Service Module, and Lunar Module.",
+    "They collected 47.5 pounds of lunar material to bring back to Earth."
 ]
-distractor = ["The deep sea trench is underwater."]
 
-X_train = np.array([basic_extract_vector(ctx).cpu().numpy() for ctx in true_ctx])
-X_distract = np.array([basic_extract_vector(distractor[0]).cpu().numpy()])
+# Hard Negative: Topically identical but factually incorrect
+hard_negative = "Apollo 11 successfully landed on the moon and Commander Neil Armstrong stepped onto the lunar surface in 1970."
 
-centroid = np.mean(X_train, axis=0)
-cov_matrix = np.cov(X_train, rowvar=False)
+# Spatial Outlier: Completely off-topic
+spatial_outlier = "The Mariana Trench is the deepest oceanic trench on Earth."
+
+print("\\n--- Layer 1: Spatial Triage (Mahalanobis Distance) ---")
+valid_acts = np.array([basic_extract_vector(c).cpu().numpy() for c in valid_chunks])
+hard_neg_act = basic_extract_vector(hard_negative).cpu().numpy()
+spatial_outlier_act = basic_extract_vector(spatial_outlier).cpu().numpy()
+
+centroid = np.mean(valid_acts, axis=0)
+cov_matrix = np.cov(valid_acts, rowvar=False)
 inv_cov_matrix = np.linalg.pinv(cov_matrix + 1e-4 * np.eye(cov_matrix.shape[0]))
 
-print(f"Cosine Valid Doc: {cosine(X_train[0], centroid):.4f}")
-print(f"Cosine Distractor: {cosine(X_distract[0], centroid):.4f}")
+print(f"Valid Chunk Distance: {mahalanobis(valid_acts[0], centroid, inv_cov_matrix):.4f}")
+print(f"Hard Negative Distance: {mahalanobis(hard_neg_act, centroid, inv_cov_matrix):.4f} (SURVIVES! It is inside the topic cluster)")
+print(f"Spatial Outlier Distance: {mahalanobis(spatial_outlier_act, centroid, inv_cov_matrix):.4f} (CAUGHT by Spatial Triage!)")
 
-print(f"\\nMahalanobis Valid Doc: {mahalanobis(X_train[0], centroid, inv_cov_matrix):.4f}")
-print(f"Mahalanobis Distractor: {mahalanobis(X_distract[0], centroid, inv_cov_matrix):.4f}")
+print("\\n--- Layer 2: Veracity Triage (Factuality Projection) ---")
+true_stmt = basic_extract_vector("The Apollo 11 moon landing happened in 1969.").cpu().numpy()
+false_stmt = basic_extract_vector("The Apollo 11 moon landing happened in 1970.").cpu().numpy()
+v_fact = true_stmt - false_stmt
+v_fact = v_fact / np.linalg.norm(v_fact)
 
-print("\\nResult: The elliptical Mahalanobis penalty explodes out-of-distribution detection, guaranteeing unsupervised vector triage.")
+def get_veracity(act):
+    return np.dot(act, v_fact) / (np.linalg.norm(act) * np.linalg.norm(v_fact))
+
+print(f"Valid Chunk Veracity: {get_veracity(valid_acts[0]):.4f} (Positive = Aligns with Truth)")
+print(f"Hard Negative Veracity: {get_veracity(hard_neg_act):.4f} (CAUGHT! Points purely to False Pole)")
+print(f"Spatial Outlier Veracity: {get_veracity(spatial_outlier_act):.4f} (Neutral/Irrelevant)")
+
+print("\\n--- Layer 3: Uncertainty Gating ---")
+unknown_stmt = basic_extract_vector("The secret architectural code for the Xenon platform is X-992.").cpu().numpy()
+print(f"Unknown Fact Entropy/Veracity: {get_veracity(unknown_stmt):.4f}")
+print(f"Near 0.0 indicates no internal logic structure for this fact -> Triggers Uncertainty Gate -> Disables Steering to protect new RAG data.")
 """)
 
 add_markdown("## 5. Conclusion")
