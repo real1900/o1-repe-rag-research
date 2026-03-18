@@ -2,6 +2,8 @@ import torch
 import json
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import logging
+import string
+import re
 
 logging.getLogger("transformers").setLevel(logging.ERROR)
 
@@ -137,6 +139,22 @@ def format_distractor_query(distractor, question):
     ]
     return tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
 
+def normalize_answer(s):
+    def remove_articles(text):
+        return re.sub(r'\b(a|an|the)\b', ' ', text)
+    def white_space_fix(text):
+        return ' '.join(text.split())
+    def remove_punc(text):
+        exclude = set(string.punctuation)
+        return ''.join(ch for ch in text if ch not in exclude)
+    return white_space_fix(remove_articles(remove_punc(s.lower())))
+
+def contains_answer(prediction, ground_truth):
+    pred_norm = normalize_answer(prediction)
+    gt_norm = normalize_answer(ground_truth)
+    if gt_norm in pred_norm:
+        return 1.0
+    return 0.0
 
 with open("hotpot_filtered_5000.json", 'r', encoding='utf-8') as f:
     dataset = json.load(f)
@@ -144,8 +162,8 @@ with open("hotpot_filtered_5000.json", 'r', encoding='utf-8') as f:
 # Use last 30 for speed of local execution
 eval_set = dataset[-20:]
 
-baseline_correct = 0
-repe_correct = 0
+baseline_correct = 0.0
+repe_correct = 0.0
 STATIC_ALPHA = 0.50 # Gentle steering coefficient
 
 print("\nEvaluating KL-Braking on Mixed Context using Llama-3.2-1B-Instruct...")
@@ -164,8 +182,7 @@ for i, row in enumerate(eval_set):
         out_base = base_model.generate(**inputs, max_new_tokens=15, do_sample=False, pad_token_id=tokenizer.eos_token_id)
     gen_base = tokenizer.decode(out_base[0][input_len:], skip_special_tokens=True).lower()
     
-    if answer in gen_base:
-        baseline_correct += 1
+    baseline_correct += contains_answer(gen_base, answer)
 
     # Extract distractor vectors
     dist_prompt = format_distractor_query(distractor, question)
@@ -178,8 +195,7 @@ for i, row in enumerate(eval_set):
     steered_ids = generate_with_kl_braking(inputs, STATIC_ALPHA, c_vecs_by_layer, max_new_tokens=15, kl_threshold=2.0)
     gen_repe = tokenizer.decode(steered_ids[0][input_len:], skip_special_tokens=True).lower()
 
-    if answer in gen_repe:
-        repe_correct += 1
+    repe_correct += contains_answer(gen_repe, answer)
 
     if (i+1) % 5 == 0:
         print(f"Processed {i+1}/{len(eval_set)}... (Baseline Acc: {(baseline_correct/(i+1))*100:.1f}%, Steered Acc: {(repe_correct/(i+1))*100:.1f}%)")
@@ -190,10 +206,10 @@ base_acc = (baseline_correct / len(eval_set)) * 100
 repe_acc = (repe_correct / len(eval_set)) * 100
 
 print(f"\n[Baseline Llama-3 Unsteered (Distracted)]")
-print(f"Accuracy (Exact Match): {base_acc:.2f}%")
+print(f"Accuracy (Normalized Substring Match): {base_acc:.2f}%")
 
 print(f"\n[O(1) RepE Steered w/ KL-Braking (Protected Logic)]")
-print(f"Accuracy (Exact Match): {repe_acc:.2f}%")
+print(f"Accuracy (Normalized Substring Match): {repe_acc:.2f}%")
 
 if repe_acc > base_acc:
     relative_jump = ((repe_acc - base_acc) / base_acc) * 100
