@@ -1,0 +1,30 @@
+{
+ "meta": {
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "is_actual_selfrag": false,
+  "n_queries": 500,
+  "eval_start": 3500,
+  "eval_end": 4000,
+  "total_seconds": 1270.1130142211914,
+  "device": "cuda"
+ },
+ "baseline": {
+  "em": 0.12,
+  "ci_lo": 0.092,
+  "ci_hi": 0.15,
+  "lat_mean": 0.16668019342422485,
+  "lat_std": 0.0801389155601224
+ },
+ "selfrag": {
+  "em": 0.144,
+  "ci_lo": 0.114,
+  "ci_hi": 0.176,
+  "lat_mean": 2.3699161024093627,
+  "lat_std": 1.0737877364326744
+ },
+ "delta_em_pp": 2.3999999999999995,
+ "delta_em_perm_p": 0.0502,
+ "latency_ratio": 14.218342646013065,
+ "n_chunks_mean": 4.31,
+ "n_relevant_mean": 1.684
+}

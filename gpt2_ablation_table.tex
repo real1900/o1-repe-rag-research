@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\caption{Six-condition paired ablation on \textbf{GPT-2} (124M, layer 6/12), $n\!=\!500$. All MACH-1 variants are statistically indistinguishable from the baseline ($p\!=\!1.000$ for every comparison; $\Delta\leq+0.20$\,pp $=$ 1 query out of 500). The non-instruction-tuned 124M model produces no measurable response to mid-layer contrastive steering on this task.}
+\label{tab:gpt2-ablation}
+\centering\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l r r r r}
+\toprule
+Condition & EM (\%) & 95\% CI & $\Delta$ (pp) & Perm $p$ \\
+\midrule
+Blind RAG (baseline) & 4.20 & [2.60, 6.00] & --- & --- \\
+MACH-1 Hybrid & 4.40 & [2.80, 6.40] & +0.20 & 1.0000 \\
+MACH-1 Probe-Only & 4.20 & [2.60, 6.00] & +0.00 & 1.0000 \\
+MACH-1 Static-$\alpha$ & 4.40 & [2.60, 6.20] & +0.20 & 1.0000 \\
+MACH-1 NoGating & 4.40 & [2.60, 6.20] & +0.20 & 1.0000 \\
+MACH-1 NoContrastive & 4.40 & [2.80, 6.20] & +0.20 & 1.0000 \\
+\bottomrule\end{tabular}\end{table}

@@ -1,0 +1,11 @@
+\begin{table}[htbp]
+\caption{Llama-3.1-8B-Instruct: phase-A joint sweep over 5 layers $\times$ 3 $\alpha$-values picks the best $(\ell\!=\!10, \alpha\!=\!1)$ on $n\!=\!200$. Phase-B 5-permutation validation on a \emph{disjoint} $n\!=\!500$ subset reports the result below. \textbf{The pooled $\Delta\!=\!-0.20$\,pp ($p\!=\!0.4211$) shows that the phase-A best does not generalize}, i.e., the framework that produces a directional positive effect on Llama-3.2-3B does not transfer to Llama-3.1-8B.}
+\label{tab:llama8b}
+\centering\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l r r r r}
+\toprule
+Phase & EM baseline (\%) & EM steered (\%) & $\Delta$ (pp) & Perm $p$ \\
+\midrule
+Phase A (best of 15, $n\!=\!200$) & 16.00 & 17.00 & +1.00 & 0.5014 \\
+Phase B (5-permutation pooled, $n\!=\!500$) & 14.80 & 14.60 & -0.20 & 0.4211 \\
+\bottomrule\end{tabular}\end{table}

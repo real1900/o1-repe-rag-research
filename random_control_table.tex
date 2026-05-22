@@ -1,0 +1,19 @@
+\begin{table}[htbp]
+\caption{Random-direction control on Llama-3.2-3B at the headline configuration ($\ell\!=\!7$, $\alpha\!=\!2$, $n\!=\!500$). \textbf{Contrastive}: the MACH-1 direction $V_{\text{neg}} - V_{\text{pos}}$. \textbf{Random (5 fixed seeds)}: pre-sampled unit vectors held constant across queries. \textbf{Random per-query}: a fresh unit vector sampled per query (pure noise injection). $p$: paired permutation test vs.\ Blind RAG.}
+\label{tab:random-control}
+\centering\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l r r r r}
+\toprule
+Direction & EM (\%) & 95\% CI & $\Delta$ (pp) & Perm $p$ \\
+\midrule
+Blind RAG (no steering) & 12.00 & [9.20, 15.00] & --- & --- \\
+\textbf{Contrastive ($V_{\text{neg}}-V_{\text{pos}}$)} & \textbf{13.00} & [10.00, 16.00] & +1.00 & 0.0587$^{\dagger}$ \\
+Random fixed (seed 0) & 12.40 & [9.60, 15.40] & +0.40 & 0.5015 \\
+Random fixed (seed 1) & 12.20 & [9.40, 15.20] & +0.20 & 1.0000 \\
+Random fixed (seed 2) & 12.60 & [9.80, 15.60] & +0.60 & 0.3777 \\
+Random fixed (seed 3) & 12.80 & [10.00, 15.80] & +0.80 & 0.2248 \\
+Random fixed (seed 4) & 11.40 & [8.60, 14.20] & -0.60 & 0.3715 \\
+Random per-query & 11.40 & [8.80, 14.20] & -0.60 & 0.2393 \\
+\midrule
+Random fixed (mean of 5) & 12.28 & --- & +0.28 & --- \\
+\bottomrule\end{tabular}\end{table}

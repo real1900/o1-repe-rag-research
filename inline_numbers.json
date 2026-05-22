@@ -1,0 +1,19 @@
+{
+ "headline_n": 500,
+ "headline_layer": 7,
+ "headline_alpha": 2.0,
+ "headline_baseline_em": 12.0,
+ "headline_steered_em": 13.0,
+ "headline_delta_pp": 1.0,
+ "headline_delta_rel": 8.3,
+ "headline_p": 0.066,
+ "headline_baseline_lat_ms": 94.4,
+ "headline_steered_lat_ms": 93.9,
+ "alpha_sweep_layer": 14,
+ "alpha_sweep_n": 200,
+ "alpha_20_delta_pp": -7.000000000000001,
+ "alpha_20_p": 0.0065,
+ "gpt2_n": 500,
+ "gpt2_baseline_em": 4.2,
+ "gpt2_hybrid_em": 4.4
+}

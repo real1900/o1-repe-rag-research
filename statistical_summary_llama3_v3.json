@@ -1,0 +1,83 @@
+{
+ "meta": {
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "n_queries": 200,
+  "alphas": [
+   0.0,
+   1.0,
+   2.0,
+   5.0,
+   10.0,
+   20.0
+  ],
+  "target_layer": 14,
+  "num_layers": 28,
+  "eval_start": 3500,
+  "eval_end": 3700,
+  "total_seconds": 113.42494487762451,
+  "device": "cuda",
+  "steering_form": "unit_direction"
+ },
+ "rows": [
+  {
+   "alpha": 0.0,
+   "condition": "alpha_0",
+   "em": 0.125,
+   "ci_lo": 0.08,
+   "ci_hi": 0.17,
+   "delta_pp": null,
+   "perm_p": null,
+   "lat_mean": 0.09198110222816468
+  },
+  {
+   "alpha": 1.0,
+   "condition": "alpha_1",
+   "em": 0.125,
+   "ci_lo": 0.08,
+   "ci_hi": 0.175,
+   "delta_pp": 0.0,
+   "perm_p": 1.0,
+   "lat_mean": 0.08997876286506652
+  },
+  {
+   "alpha": 2.0,
+   "condition": "alpha_2",
+   "em": 0.125,
+   "ci_lo": 0.08,
+   "ci_hi": 0.175,
+   "delta_pp": 0.0,
+   "perm_p": 1.0,
+   "lat_mean": 0.09009511470794677
+  },
+  {
+   "alpha": 5.0,
+   "condition": "alpha_5",
+   "em": 0.12,
+   "ci_lo": 0.08,
+   "ci_hi": 0.17,
+   "delta_pp": -0.5000000000000004,
+   "perm_p": 1.0,
+   "lat_mean": 0.08961813807487488
+  },
+  {
+   "alpha": 10.0,
+   "condition": "alpha_10",
+   "em": 0.085,
+   "ci_lo": 0.05,
+   "ci_hi": 0.125,
+   "delta_pp": -3.9999999999999996,
+   "perm_p": 0.056,
+   "lat_mean": 0.08969446778297424
+  },
+  {
+   "alpha": 20.0,
+   "condition": "alpha_20",
+   "em": 0.055,
+   "ci_lo": 0.025,
+   "ci_hi": 0.09,
+   "delta_pp": -7.000000000000001,
+   "perm_p": 0.0065,
+   "lat_mean": 0.0886826753616333
+  }
+ ]
+}

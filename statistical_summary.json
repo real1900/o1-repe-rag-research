@@ -1,0 +1,76 @@
+{
+ "meta": {
+  "eval_start": 3500,
+  "eval_end": 4000,
+  "n_queries": 500,
+  "model_id": "gpt2",
+  "target_layer": 6,
+  "gating_tau": 15.0,
+  "heuristic_trip": 0.05,
+  "heuristic_frac": 0.45,
+  "heuristic_trips": 500,
+  "total_seconds": 495.5852689743042
+ },
+ "rows": [
+  {
+   "condition": "baseline",
+   "pretty": "Blind RAG (baseline)",
+   "em": 0.042,
+   "ci_lo": 0.026,
+   "ci_hi": 0.06,
+   "delta_pp": null,
+   "perm_p": null,
+   "lat_mean": 0.2021443796157837
+  },
+  {
+   "condition": "hybrid",
+   "pretty": "MACH-1 Hybrid (probe + heuristic + gating + contrastive)",
+   "em": 0.044,
+   "ci_lo": 0.028,
+   "ci_hi": 0.064,
+   "delta_pp": 0.19999999999999948,
+   "perm_p": 1.0,
+   "lat_mean": 0.13501458024978638
+  },
+  {
+   "condition": "probe_only",
+   "pretty": "MACH-1 Probe-Only (no heuristic fallback)",
+   "em": 0.042,
+   "ci_lo": 0.026,
+   "ci_hi": 0.06,
+   "delta_pp": 0.0,
+   "perm_p": 1.0,
+   "lat_mean": 0.15011607313156128
+  },
+  {
+   "condition": "static",
+   "pretty": "MACH-1 Static-$\\alpha$ (= 0.45 collapse$_\\alpha$)",
+   "em": 0.044,
+   "ci_lo": 0.026,
+   "ci_hi": 0.062,
+   "delta_pp": 0.19999999999999948,
+   "perm_p": 1.0,
+   "lat_mean": 0.150291232585907
+  },
+  {
+   "condition": "no_gating",
+   "pretty": "MACH-1 NoGating ablation",
+   "em": 0.044,
+   "ci_lo": 0.026,
+   "ci_hi": 0.062,
+   "delta_pp": 0.19999999999999948,
+   "perm_p": 1.0,
+   "lat_mean": 0.10979157114028931
+  },
+  {
+   "condition": "no_contrastive",
+   "pretty": "MACH-1 NoContrastive (raw distractor vec)",
+   "em": 0.044,
+   "ci_lo": 0.028,
+   "ci_hi": 0.062,
+   "delta_pp": 0.19999999999999948,
+   "perm_p": 1.0,
+   "lat_mean": 0.14701938247680665
+  }
+ ]
+}

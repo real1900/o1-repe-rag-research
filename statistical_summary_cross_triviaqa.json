@@ -1,0 +1,87 @@
+{
+ "meta": {
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "dataset": "triviaqa",
+  "n_queries": 500,
+  "target_layer": 7,
+  "alpha": 2.0,
+  "seed": 2026,
+  "total_seconds": 730.5240032672882
+ },
+ "rows": [
+  {
+   "condition": "baseline",
+   "em": 0.396,
+   "ci_lo": 0.354,
+   "ci_hi": 0.438,
+   "delta_pp": null,
+   "perm_p": null,
+   "lat_mean": 0.17591974353790282
+  },
+  {
+   "condition": "contrastive",
+   "em": 0.41,
+   "ci_lo": 0.366,
+   "ci_hi": 0.452,
+   "delta_pp": 1.3999999999999957,
+   "perm_p": 0.1715,
+   "lat_mean": 0.17273917150497436
+  },
+  {
+   "condition": "random_0",
+   "em": 0.42,
+   "ci_lo": 0.376,
+   "ci_hi": 0.4620499999999993,
+   "delta_pp": 2.399999999999997,
+   "perm_p": 0.0079,
+   "lat_mean": 0.16973370361328124
+  },
+  {
+   "condition": "random_1",
+   "em": 0.404,
+   "ci_lo": 0.36,
+   "ci_hi": 0.446,
+   "delta_pp": 0.8000000000000007,
+   "perm_p": 0.5059,
+   "lat_mean": 0.17069964838027954
+  },
+  {
+   "condition": "random_2",
+   "em": 0.408,
+   "ci_lo": 0.366,
+   "ci_hi": 0.452,
+   "delta_pp": 1.1999999999999955,
+   "perm_p": 0.2399,
+   "lat_mean": 0.16571568632125855
+  },
+  {
+   "condition": "random_3",
+   "em": 0.356,
+   "ci_lo": 0.314,
+   "ci_hi": 0.398,
+   "delta_pp": -4.0000000000000036,
+   "perm_p": 0.0,
+   "lat_mean": 0.19119684076309204
+  },
+  {
+   "condition": "random_4",
+   "em": 0.39,
+   "ci_lo": 0.346,
+   "ci_hi": 0.434,
+   "delta_pp": -0.6000000000000005,
+   "perm_p": 0.605,
+   "lat_mean": 0.180343533039093
+  },
+  {
+   "condition": "random_per_query",
+   "em": 0.408,
+   "ci_lo": 0.366,
+   "ci_hi": 0.45,
+   "delta_pp": 1.1999999999999955,
+   "perm_p": 0.2899,
+   "lat_mean": 0.1751830177307129
+  }
+ ],
+ "random_dir_mean": 0.39560000000000006,
+ "random_dir_std": 0.021996363335788034
+}

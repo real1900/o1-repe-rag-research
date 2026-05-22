@@ -1,0 +1,87 @@
+{
+ "meta": {
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "dataset": "twiki",
+  "n_queries": 500,
+  "target_layer": 7,
+  "alpha": 2.0,
+  "seed": 2026,
+  "total_seconds": 1013.9874691963196
+ },
+ "rows": [
+  {
+   "condition": "baseline",
+   "em": 0.118,
+   "ci_lo": 0.09,
+   "ci_hi": 0.148,
+   "delta_pp": null,
+   "perm_p": null,
+   "lat_mean": 0.24803471517562867
+  },
+  {
+   "condition": "contrastive",
+   "em": 0.134,
+   "ci_lo": 0.104,
+   "ci_hi": 0.166,
+   "delta_pp": 1.6000000000000014,
+   "perm_p": 0.0236,
+   "lat_mean": 0.2453903694152832
+  },
+  {
+   "condition": "random_0",
+   "em": 0.114,
+   "ci_lo": 0.086,
+   "ci_hi": 0.142,
+   "delta_pp": -0.39999999999999897,
+   "perm_p": 0.6285,
+   "lat_mean": 0.246422381401062
+  },
+  {
+   "condition": "random_1",
+   "em": 0.122,
+   "ci_lo": 0.094,
+   "ci_hi": 0.152,
+   "delta_pp": 0.40000000000000036,
+   "perm_p": 0.498,
+   "lat_mean": 0.24657384729385376
+  },
+  {
+   "condition": "random_2",
+   "em": 0.118,
+   "ci_lo": 0.09,
+   "ci_hi": 0.146,
+   "delta_pp": 0.0,
+   "perm_p": 1.0,
+   "lat_mean": 0.24584186840057373
+  },
+  {
+   "condition": "random_3",
+   "em": 0.128,
+   "ci_lo": 0.098,
+   "ci_hi": 0.158,
+   "delta_pp": 1.0000000000000009,
+   "perm_p": 0.1265,
+   "lat_mean": 0.24431632709503173
+  },
+  {
+   "condition": "random_4",
+   "em": 0.118,
+   "ci_lo": 0.09,
+   "ci_hi": 0.146,
+   "delta_pp": 0.0,
+   "perm_p": 1.0,
+   "lat_mean": 0.2469687237739563
+  },
+  {
+   "condition": "random_per_query",
+   "em": 0.122,
+   "ci_lo": 0.094,
+   "ci_hi": 0.152,
+   "delta_pp": 0.40000000000000036,
+   "perm_p": 0.7252,
+   "lat_mean": 0.24726035165786744
+  }
+ ],
+ "random_dir_mean": 0.12,
+ "random_dir_std": 0.004732863826479694
+}

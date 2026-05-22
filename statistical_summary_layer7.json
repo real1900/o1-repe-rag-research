@@ -1,0 +1,59 @@
+{
+ "meta": {
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "target_layer": 7,
+  "alphas": [
+   0.0,
+   1.0,
+   2.0,
+   3.0
+  ],
+  "n_queries": 500,
+  "eval_start": 3500,
+  "eval_end": 4000,
+  "total_seconds": 200.93216705322266,
+  "device": "cuda"
+ },
+ "rows": [
+  {
+   "alpha": 0.0,
+   "condition": "alpha_0",
+   "em": 0.12,
+   "ci_lo": 0.092,
+   "ci_hi": 0.15,
+   "delta_pp": null,
+   "perm_p": null,
+   "lat_mean": 0.09443511295318603
+  },
+  {
+   "alpha": 1.0,
+   "condition": "alpha_1",
+   "em": 0.126,
+   "ci_lo": 0.098,
+   "ci_hi": 0.156,
+   "delta_pp": 0.6000000000000005,
+   "perm_p": 0.2446,
+   "lat_mean": 0.094090407371521
+  },
+  {
+   "alpha": 2.0,
+   "condition": "alpha_2",
+   "em": 0.13,
+   "ci_lo": 0.102,
+   "ci_hi": 0.16,
+   "delta_pp": 1.0000000000000009,
+   "perm_p": 0.066,
+   "lat_mean": 0.09388835906982422
+  },
+  {
+   "alpha": 3.0,
+   "condition": "alpha_3",
+   "em": 0.122,
+   "ci_lo": 0.094,
+   "ci_hi": 0.152,
+   "delta_pp": 0.20000000000000018,
+   "perm_p": 1.0,
+   "lat_mean": 0.09266293954849243
+  }
+ ]
+}

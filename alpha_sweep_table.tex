@@ -1,0 +1,15 @@
+\begin{table}[htbp]
+\caption{Mid-layer $\alpha$-magnitude sweep: layer $\ell\!=\!14$ (mid of 28), $n\!=\!200$ paired queries on Llama-3.2-3B-Instruct. Steering monotonically degrades accuracy as $\alpha$ grows; the default mid-layer target is the wrong choice. Significance: $^{\ast\ast}p<0.01$, $^{\dagger}p<0.10$.}
+\label{tab:alpha-sweep}
+\centering\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{c r r r r}
+\toprule
+$\alpha$ & EM (\%) & 95\% CI & $\Delta$ (pp) & Perm $p$ \\
+\midrule
+0 & 12.50 & [8.00, 17.00] & --- & --- \\
+1 & 12.50 & [8.00, 17.50] & +0.00 & 1.0000 \\
+2 & 12.50 & [8.00, 17.50] & +0.00 & 1.0000 \\
+5 & 12.00 & [8.00, 17.00] & -0.50 & 1.0000 \\
+10 & 8.50 & [5.00, 12.50] & -4.00 & 0.0560$^{\dagger}$ \\
+20 & 5.50 & [2.50, 9.00] & -7.00 & 0.0065$^{\ast\ast}$ \\
+\bottomrule\end{tabular}\end{table}

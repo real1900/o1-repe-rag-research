@@ -1,0 +1,23 @@
+{
+ "sr_baseline_em": 12.0,
+ "sr_baseline_lat_ms": 166.7,
+ "sr_em": 14.4,
+ "sr_lat_ms": 2369.9,
+ "sr_delta_pp": 2.4,
+ "sr_p": 0.0502,
+ "sr_lat_ratio": 14.22,
+ "mach1_em": 13.0,
+ "mach1_lat_ms": 93.9,
+ "ll8b_best_layer": 10,
+ "ll8b_best_alpha": 1,
+ "ll8b_phase_a_delta": 1.0,
+ "ll8b_phase_a_p": 0.5014,
+ "ll8b_phase_b_delta": -0.2,
+ "ll8b_phase_b_p": 0.4211,
+ "rc_baseline": 12.0,
+ "rc_contrastive": 13.0,
+ "rc_contrastive_delta": 1.0,
+ "rc_contrastive_p": 0.0587,
+ "rc_random_mean": 12.28,
+ "rc_random_std": 0.48
+}

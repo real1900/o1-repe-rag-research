@@ -1,0 +1,86 @@
+{
+ "meta": {
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "n_queries": 500,
+  "target_layer": 7,
+  "alpha": 2.0,
+  "seed": 2026,
+  "total_seconds": 708.3893361091614
+ },
+ "rows": [
+  {
+   "condition": "baseline",
+   "em": 0.12,
+   "ci_lo": 0.092,
+   "ci_hi": 0.15,
+   "delta_pp": null,
+   "perm_p": null,
+   "lat_mean": 0.1715320897102356
+  },
+  {
+   "condition": "contrastive",
+   "em": 0.13,
+   "ci_lo": 0.1,
+   "ci_hi": 0.16,
+   "delta_pp": 1.0000000000000009,
+   "perm_p": 0.0587,
+   "lat_mean": 0.17009081840515136
+  },
+  {
+   "condition": "random_0",
+   "em": 0.124,
+   "ci_lo": 0.096,
+   "ci_hi": 0.154,
+   "delta_pp": 0.40000000000000036,
+   "perm_p": 0.5015,
+   "lat_mean": 0.16969475746154786
+  },
+  {
+   "condition": "random_1",
+   "em": 0.122,
+   "ci_lo": 0.094,
+   "ci_hi": 0.152,
+   "delta_pp": 0.20000000000000018,
+   "perm_p": 1.0,
+   "lat_mean": 0.17170437622070311
+  },
+  {
+   "condition": "random_2",
+   "em": 0.126,
+   "ci_lo": 0.098,
+   "ci_hi": 0.156,
+   "delta_pp": 0.6000000000000005,
+   "perm_p": 0.3777,
+   "lat_mean": 0.167822434425354
+  },
+  {
+   "condition": "random_3",
+   "em": 0.128,
+   "ci_lo": 0.1,
+   "ci_hi": 0.158,
+   "delta_pp": 0.8000000000000007,
+   "perm_p": 0.2248,
+   "lat_mean": 0.17251376008987426
+  },
+  {
+   "condition": "random_4",
+   "em": 0.114,
+   "ci_lo": 0.086,
+   "ci_hi": 0.142,
+   "delta_pp": -0.5999999999999992,
+   "perm_p": 0.3715,
+   "lat_mean": 0.173878613948822
+  },
+  {
+   "condition": "random_per_query",
+   "em": 0.114,
+   "ci_lo": 0.088,
+   "ci_hi": 0.142,
+   "delta_pp": -0.5999999999999992,
+   "perm_p": 0.2393,
+   "lat_mean": 0.17302284812927246
+  }
+ ],
+ "random_dir_mean": 0.12279999999999999,
+ "random_dir_std": 0.004833218389437828
+}

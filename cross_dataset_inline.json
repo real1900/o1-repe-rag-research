@@ -1,0 +1,20 @@
+{
+ "hotpot_baseline": 12.0,
+ "hotpot_contrastive": 13.0,
+ "hotpot_random": 12.28,
+ "hotpot_delta_base": 1.0,
+ "hotpot_delta_rand": 0.72,
+ "hotpot_p": 0.0587,
+ "triviaqa_baseline": 39.6,
+ "triviaqa_contrastive": 41.0,
+ "triviaqa_random": 39.56,
+ "triviaqa_delta_base": 1.4,
+ "triviaqa_delta_rand": 1.44,
+ "triviaqa_p": 0.1715,
+ "twiki_baseline": 11.8,
+ "twiki_contrastive": 13.4,
+ "twiki_random": 12.0,
+ "twiki_delta_base": 1.6,
+ "twiki_delta_rand": 1.4,
+ "twiki_p": 0.0236
+}

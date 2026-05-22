@@ -1,0 +1,18 @@
+\begin{table*}[htbp]
+\caption{Six-condition paired ablation on $n = 500$ HotpotQA queries (rows 3500--4000, OOD from the MLP-probe tuning subset). EM = Exact Match. CI: 95\% bootstrap (10{,}000 resamples). $\Delta$: percentage-point difference vs.\ baseline (paired). $p$: paired permutation test (10{,}000 sign-flipped permutations) vs.\ baseline. Significance: $^{\ast}p<0.05$, $^{\ast\ast}p<0.01$, $^{\ast\ast\ast}p<0.001$. Heuristic-$\alpha$ fallback fired on 500/500 (100.0\%) of Hybrid queries.}
+\label{tab:ablation}
+\centering
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l r r r r r}
+\toprule
+\textbf{Condition} & \textbf{EM (\%)} & \textbf{95\% CI} & \textbf{$\Delta$ (pp)} & \textbf{Perm $p$} & \textbf{Latency (ms)} \\
+\midrule
+Blind RAG (baseline) & 4.20 & [2.60, 6.00] & --- & --- & 202.1 \\
+\textbf{MACH-1 Hybrid (production)} & 4.40 & [2.80, 6.40] & +0.20 & 1.0000 & 135.0 \\
+MACH-1 Probe-Only & 4.20 & [2.60, 6.00] & +0.00 & 1.0000 & 150.1 \\
+MACH-1 Static-$\alpha$ & 4.40 & [2.60, 6.20] & +0.20 & 1.0000 & 150.3 \\
+MACH-1 NoGating & 4.40 & [2.60, 6.20] & +0.20 & 1.0000 & 109.8 \\
+MACH-1 NoContrastive & 4.40 & [2.80, 6.20] & +0.20 & 1.0000 & 147.0 \\
+\bottomrule
+\end{tabular}
+\end{table*}

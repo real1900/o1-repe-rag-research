@@ -1,0 +1,12 @@
+\begin{table*}[htbp]
+\caption{Cross-scale empirical disposition of MACH-1. EM = Exact Match. CI: bootstrap 95\%. $p$: paired permutation test. \emph{Layer searched}: whether a layer-position sweep was conducted on this model. The pattern is scale-dependent: a directional positive effect appears only on Llama-3.2-3B at the early-middle layer; smaller (GPT-2) and larger (Llama-3.1-8B) models show null effects.}
+\label{tab:cross-scale}
+\centering\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{l c c c r r r}
+\toprule
+Model & Params & Layer & $\alpha$ & Best $\Delta$ (pp) & Perm $p$ & Layer searched? \\
+\midrule
+GPT-2                & 124M & 6/12 (mid) & --- & +0.20 & 1.0000 & No \\
+\textbf{Llama-3.2-3B-Instruct}    & 3B   & \textbf{7/28 (early)} & 2 & \textbf{+1.00} & \textbf{0.0660$^{\dagger}$} & Yes \\
+Llama-3.1-8B-Instruct    & 8B   & 10/32 & 1 & -0.20 & 0.4211 & Yes (joint sweep) \\
+\bottomrule\end{tabular}\end{table*}
