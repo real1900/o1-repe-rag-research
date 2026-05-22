@@ -15,7 +15,7 @@ N_QUERIES = int(os.environ.get("N_QUERIES", 500))
 EVAL_START = int(os.environ.get("EVAL_START", 3500))
 HOTPOT = "hotpot_filtered_5000.json"
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 torch.set_grad_enabled(False)
 
 # selfrag/selfrag_llama2_7b ships a Llama-2 SentencePiece tokenizer. Fresh GPU
@@ -33,7 +33,7 @@ print(f"[load] {MODEL} ...")
 # use_fast=False loads the SentencePiece tokenizer directly, skipping the fast
 # converter that failed without protobuf in earlier runs.
 tok = AutoTokenizer.from_pretrained(MODEL, use_fast=False)
-model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.float16, device_map=device)
+model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.float16).to(device)
 if tok.pad_token is None: tok.pad_token = tok.eos_token
 model.eval()
 print(f"[load] OK")
