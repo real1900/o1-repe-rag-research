@@ -18,8 +18,21 @@ HOTPOT = "hotpot_filtered_5000.json"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 torch.set_grad_enabled(False)
 
+# selfrag/selfrag_llama2_7b ships a Llama-2 SentencePiece tokenizer. Fresh GPU
+# images often lack sentencepiece/protobuf, since the Llama-3.x models used
+# elsewhere in this project do not need them -- ensure they are present here.
+import subprocess
+for _pkg, _mod in (("sentencepiece", "sentencepiece"), ("protobuf", "google.protobuf")):
+    try:
+        __import__(_mod)
+    except ImportError:
+        print(f"[setup] installing {_pkg} ...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", _pkg], check=True)
+
 print(f"[load] {MODEL} ...")
-tok = AutoTokenizer.from_pretrained(MODEL)
+# use_fast=False loads the SentencePiece tokenizer directly, skipping the fast
+# converter that failed without protobuf in earlier runs.
+tok = AutoTokenizer.from_pretrained(MODEL, use_fast=False)
 model = AutoModelForCausalLM.from_pretrained(MODEL, dtype=torch.float16, device_map=device)
 if tok.pad_token is None: tok.pad_token = tok.eos_token
 model.eval()
