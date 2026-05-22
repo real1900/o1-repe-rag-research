@@ -1,0 +1,85 @@
+{
+ "meta": {
+  "model": "selfrag/selfrag_llama2_7b",
+  "n_queries": 500,
+  "eval_start": 3500,
+  "eval_end": 4000,
+  "total_seconds": 2387.8015859127045,
+  "device": "mps",
+  "sample_outputs": [
+   {
+    "q": "Flyboys stars which actor who was nominated for an Academy Award for \"127 Hours\"?",
+    "gold": "james franco",
+    "baseline_text": "the actor who was nominated for an academy award for \"1",
+    "selfrag_text": "the actor who was nominated for an academy award for \"127 hours\" is james franco",
+    "selfrag_raw": "The actor who was nominated for an Academy Award for \"127 Hours\" is James Franco."
+   },
+   {
+    "q": "What foundation do scholars give for the likelihood of collaboration on a William Shakespeare Play w",
+    "gold": "linguistic analysis",
+    "baseline_text": "1.the book was written by a group",
+    "selfrag_text": "1.the book was written by a group of monks who were active in the theravada trad",
+    "selfrag_raw": "1.The book was written by a group of monks who were active in the Theravada tradition in Sri Lanka during the 19th century.\n2.3."
+   },
+   {
+    "q": "Thomas Major was the engraver to the estranged son of which monarch?",
+    "gold": "george ii",
+    "baseline_text": "the monarch in question is likely king george v, as the",
+    "selfrag_text": "the monarch in question is likely king george v, as the film was produced in the",
+    "selfrag_raw": "The monarch in question is likely King George V, as the film was produced in the United Kingdom and set in the early 20th century.Thomas Major was the engraver to the estranged son of King George V."
+   },
+   {
+    "q": "Which Persian historical figure was an astronomer, Al-Karaji or Ahmad Nahavandi? ",
+    "gold": "ahmad",
+    "baseline_text": "al-karaji and ahmad nahav",
+    "selfrag_text": "al-karaji and ahmad nahavandi were both persian astronomers.al-karaji was an ast",
+    "selfrag_raw": "Al-Karaji and Ahmad Nahavandi were both Persian astronomers.Al-Karaji was an astronomer and mathematician who lived in the 11th century CE.He is best known for his work on the astrolabe and his contri"
+   },
+   {
+    "q": "What was the arena, in which the 2017 Brit Awards were held, called during the 2012 Olympics ?",
+    "gold": "north greenwich arena",
+    "baseline_text": "the brit awards are an annual music awards show in the united",
+    "selfrag_text": "the brit awards are an annual music awards show in the united kingdom.the 2017 b",
+    "selfrag_raw": "The Brit Awards are an annual music awards show in the United Kingdom.The 2017 Brit Awards were held at the O2 Arena in London."
+   },
+   {
+    "q": "Party of Syrian Unity was established in the wake of a public statement that announced what ?",
+    "gold": "support for the establishment of a \"national home ",
+    "baseline_text": "the damascus spring",
+    "selfrag_text": "the damascus spring",
+    "selfrag_raw": "the Damascus Spring"
+   },
+   {
+    "q": "Which player for the Chicago American Gears held the record which George Harry Yardley III broke ",
+    "gold": "george lawrence mikan, jr.",
+    "baseline_text": "i'm sorry, but i'm not sure what",
+    "selfrag_text": "i'm sorry, but i'm not sure what record you are referring to.could you please pr",
+    "selfrag_raw": "I'm sorry, but I'm not sure what record you are referring to.Could you please provide more context or clarify your question?"
+   },
+   {
+    "q": "Where is the county seat for people living in Henderson Point, Mississippi?",
+    "gold": "gulfport, biloxi",
+    "baseline_text": "the county seat for people living in henderson point, mississippi",
+    "selfrag_text": "the county seat for people living in henderson point, mississippi is located in ",
+    "selfrag_raw": "The county seat for people living in Henderson Point, Mississippi is located in the city of Greenville.Greenville is the county seat of Washington County, Mississippi, United States."
+   }
+  ]
+ },
+ "baseline": {
+  "em": 0.078,
+  "ci_lo": 0.056,
+  "ci_hi": 0.102,
+  "lat_mean": 1.3229336948394776,
+  "lat_std": 0.47103088822017897
+ },
+ "selfrag": {
+  "em": 0.168,
+  "ci_lo": 0.136,
+  "ci_hi": 0.202,
+  "lat_mean": 3.4479970412254333,
+  "lat_std": 7.967621306343507
+ },
+ "delta_em_pp": 9.000000000000002,
+ "delta_em_perm_p": 0.0,
+ "latency_ratio": 2.6063264203455088
+}
