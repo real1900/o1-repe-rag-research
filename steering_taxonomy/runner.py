@@ -16,16 +16,23 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 def _make_ablate_hook(unit: torch.Tensor):
     """Build a forward hook that ablates (projects out) the `unit` direction
-    from the last token's residual stream at this layer.
+    from EVERY position of the residual stream at this layer.
 
     Ablation removes the FULL component along `unit` -- scale-free, no alpha.
+
+    Critical: we ablate at every position, not just position [-1]. The earlier
+    last-position-only variant gave near-null effects across all 12 corpus
+    tasks because during prefill the K/V cache for positions 0..N-2 is stored
+    unablated -- downstream attention then attends back through that unablated
+    prefix. The all-positions variant gives Δbase=-0.65 on refusal at layer 7
+    (refusal rate 0.65 -> 0.00); the last-position variant gives -0.05 (noise).
+    See probe_hook.py / probe_hook_results.json for the diagnostic sweep.
     """
     def hook(module, inputs, output):
         h = output[0] if isinstance(output, tuple) else output
-        hn = h.clone()
-        last = h[:, -1, :].float()                       # [batch, d]
-        coef = last @ unit                               # [batch]
-        hn[:, -1, :] = (last - coef.unsqueeze(-1) * unit).to(h.dtype)
+        hf = h.float()
+        coef = hf @ unit                                  # [batch, seq]
+        hn = h - (coef.unsqueeze(-1) * unit).to(h.dtype)  # ablate ALL positions
         if isinstance(output, tuple):
             return (hn,) + output[1:]
         return hn
