@@ -1,0 +1,18 @@
+{
+  "task_name": "sycophancy",
+  "task_kind": "behavioral",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.9997452646493912,
+  "split_half_cos_std": 0.00023188840448296055,
+  "per_pair_variance": 0.01586395502090454,
+  "baseline_metric": 0.47,
+  "steered_metric": 0.455,
+  "random_metric_mean": 0.43099999999999994,
+  "random_metric_std": 0.05141984052872975,
+  "delta_vs_baseline": -0.014999999999999958,
+  "delta_vs_random": 0.024000000000000077,
+  "seconds": 778.2353839874268,
+  "notes": ""
+}

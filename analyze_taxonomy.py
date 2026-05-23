@@ -32,8 +32,10 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 DEFAULTS = dict(
-    stab_thresh=0.7,        # split_half_cos_mean: above -> direction is stable
-    var_thresh=0.5,         # per_pair_variance: below -> per-pair directions agree
+    stab_thresh=0.7,        # split_half_cos_mean: above -> direction's mean is stable
+    var_thresh=0.3,         # per_pair_variance: ABOVE -> contrast captures real
+                            # content variation (data-derived; the original
+                            # below-threshold hypothesis was refuted by the data).
     effect_thresh=0.05,     # |steered - baseline|: above -> measurable effect
     random_thresh=0.05,     # |steered - random_mean|: above -> effect not random
 )
@@ -56,14 +58,19 @@ def load_reports(reports_dir):
 
 
 def geometric_signature(row, stab_thresh, var_thresh):
-    """Classify the direction's geometric structure."""
+    """Classify the direction's geometric structure.
+
+    Data-derived: a contrast is 'live' (predicted to steer) when its mean
+    is stable across pair subsamples (high cos) AND the per-pair directions
+    span a wide angular range (high var, indicating real content variation).
+    """
     cos = row["split_half_cos_mean"]
     var = row["per_pair_variance"]
-    if cos >= stab_thresh and var <= var_thresh:
-        return "stable"
-    if cos < 0.4 or var > 0.7:
-        return "unstable"
-    return "borderline"
+    if cos >= stab_thresh and var >= var_thresh:
+        return "live"
+    if cos < 0.4:
+        return "unstable_mean"
+    return "low_var_collapsed"
 
 
 def effect_signature(row, effect_thresh, random_thresh):
@@ -78,8 +85,8 @@ def effect_signature(row, effect_thresh, random_thresh):
 
 
 def predicted_steers(row, stab_thresh, var_thresh):
-    """The rule's prediction: stable geometry -> steering should succeed."""
-    return geometric_signature(row, stab_thresh, var_thresh) == "stable"
+    """The data-derived rule: high cos AND high var -> steering should succeed."""
+    return geometric_signature(row, stab_thresh, var_thresh) == "live"
 
 
 # ---------------------------------------------------------------------------

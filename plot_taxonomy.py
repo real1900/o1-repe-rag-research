@@ -37,7 +37,7 @@ KIND_COLORS = {
 
 DEFAULTS = dict(
     stab_thresh=0.7,
-    var_thresh=0.5,
+    var_thresh=0.3,        # LOWER bound: var must be HIGH to predict steers
     effect_thresh=0.05,
 )
 
@@ -82,17 +82,22 @@ def make_figure(rows, args):
             fontsize=8, alpha=0.9,
         )
 
-    # Decision boundary box (the "predicted to steer" region)
+    # Decision boundary box (the "predicted to steer" region).
+    # Rule (data-derived): split-half cosine >= stab_thresh AND var >= var_thresh.
+    # The box is the high-cos x high-var quadrant.
     rect = mpatches.Rectangle(
-        (0, args.stab_thresh),
-        args.var_thresh, 1.0 - args.stab_thresh,
+        (args.var_thresh, args.stab_thresh),
+        1.0 - args.var_thresh, 1.0 - args.stab_thresh,
         linewidth=1.2, edgecolor="gray", facecolor="lightgray",
         alpha=0.25, linestyle="--", zorder=1,
     )
     ax_a.add_patch(rect)
-    ax_a.text(args.var_thresh / 2, args.stab_thresh + (1 - args.stab_thresh) / 2,
-              "rule: predicted to steer",
-              ha="center", va="center", fontsize=8, color="gray", style="italic")
+    ax_a.text(
+        args.var_thresh + (1 - args.var_thresh) / 2,
+        args.stab_thresh + (1 - args.stab_thresh) / 2,
+        "rule: predicted to steer\n(cos$\\geq$0.7  AND  var$\\geq$0.3)",
+        ha="center", va="center", fontsize=8, color="gray", style="italic",
+    )
 
     ax_a.set_xlim(-0.02, 1.0)
     ax_a.set_ylim(-0.02, 1.02)

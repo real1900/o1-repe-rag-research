@@ -1,0 +1,18 @@
+{
+  "task_name": "refusal",
+  "task_kind": "behavioral",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.9984219193458557,
+  "split_half_cos_std": 0.0007991881192837119,
+  "per_pair_variance": 0.6257414221763611,
+  "baseline_metric": 0.65,
+  "steered_metric": 0.0,
+  "random_metric_mean": 0.622,
+  "random_metric_std": 0.011661903789690611,
+  "delta_vs_baseline": -0.65,
+  "delta_vs_random": -0.622,
+  "seconds": 1426.5594239234924,
+  "notes": ""
+}

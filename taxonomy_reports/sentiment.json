@@ -1,0 +1,18 @@
+{
+  "task_name": "sentiment",
+  "task_kind": "behavioral",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.7522645346820355,
+  "split_half_cos_std": 0.2915676481759109,
+  "per_pair_variance": 0.8231996893882751,
+  "baseline_metric": 0.56,
+  "steered_metric": 0.125,
+  "random_metric_mean": 0.5840000000000001,
+  "random_metric_std": 0.047999999999999994,
+  "delta_vs_baseline": -0.43500000000000005,
+  "delta_vs_random": -0.4590000000000001,
+  "seconds": 1617.3732857704163,
+  "notes": ""
+}

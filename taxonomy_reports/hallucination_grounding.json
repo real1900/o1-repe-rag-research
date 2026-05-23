@@ -1,0 +1,18 @@
+{
+  "task_name": "hallucination_grounding",
+  "task_kind": "borderline",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.9950940728187561,
+  "split_half_cos_std": 0.006050204685463215,
+  "per_pair_variance": 0.4332873821258545,
+  "baseline_metric": 0.07,
+  "steered_metric": 0.0,
+  "random_metric_mean": 0.07,
+  "random_metric_std": 0.00632455532033676,
+  "delta_vs_baseline": -0.07,
+  "delta_vs_random": -0.07,
+  "seconds": 1503.7852110862732,
+  "notes": ""
+}

@@ -1,0 +1,18 @@
+{
+  "task_name": "politeness",
+  "task_kind": "borderline",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.9995523035526276,
+  "split_half_cos_std": 0.00021301103707486015,
+  "per_pair_variance": 0.028221845626831055,
+  "baseline_metric": 0.47,
+  "steered_metric": 0.5,
+  "random_metric_mean": 0.457,
+  "random_metric_std": 0.014696938456699058,
+  "delta_vs_baseline": 0.030000000000000027,
+  "delta_vs_random": 0.04299999999999998,
+  "seconds": 1517.0494379997253,
+  "notes": ""
+}
