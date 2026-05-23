@@ -109,15 +109,21 @@ def evaluate_task(task: SteeringTask, model_runner, target_layer: int = 7,
     t0 = time.time()
     pairs = task.build_pairs(n=n_pairs)
     eval_examples = task.build_eval(n=n_eval)
+    print(f"  [pairs] {len(pairs)} contrastive pairs; "
+          f"[eval] {len(eval_examples)} held-out examples", flush=True)
 
     # 1. Extract per-pair activations at the target layer
+    t_act = time.time()
     pos_acts = model_runner.mean_act([p.positive for p in pairs], layer=target_layer)
     neg_acts = model_runner.mean_act([p.negative for p in pairs], layer=target_layer)
     per_pair_dirs = pos_acts - neg_acts                # [n_pairs, d_model]
+    print(f"  [direction] mean_act done ({time.time()-t_act:.0f}s)", flush=True)
 
     # 2. Geometric characterization
     cos_mean, cos_std = split_half_cosine(per_pair_dirs)
     var = per_pair_variance(per_pair_dirs)
+    print(f"  [geom] split-half-cos={cos_mean:.3f}±{cos_std:.3f}  "
+          f"per-pair-var={var:.3f}", flush=True)
 
     # 3. Build the mean CAA direction (unit-norm)
     direction = per_pair_dirs.mean(0)
@@ -131,15 +137,26 @@ def evaluate_task(task: SteeringTask, model_runner, target_layer: int = 7,
         random_dirs.append(rd / rd.norm())
 
     # 5. Measure: baseline (no hook) + steered (CAA-ablate) + random_* (random-ablate)
+    t_eval = time.time()
+    print(f"  [eval] baseline (no hook)...", flush=True)
     baseline = _score_set(model_runner, task, eval_examples,
                           hook=None, layer=target_layer)
+    print(f"  [eval] baseline={baseline:.3f} ({time.time()-t_eval:.0f}s)", flush=True)
+
+    t_steered = time.time()
+    print(f"  [eval] steered (CAA-ablate)...", flush=True)
     steered = _score_set(model_runner, task, eval_examples,
                          hook=("ablate", direction), layer=target_layer)
-    randoms = [
-        _score_set(model_runner, task, eval_examples,
-                   hook=("ablate", rd), layer=target_layer)
-        for rd in random_dirs
-    ]
+    print(f"  [eval] steered={steered:.3f} ({time.time()-t_steered:.0f}s)", flush=True)
+
+    randoms = []
+    for k, rd in enumerate(random_dirs):
+        t_r = time.time()
+        print(f"  [eval] random {k+1}/{len(random_dirs)}...", flush=True)
+        r = _score_set(model_runner, task, eval_examples,
+                       hook=("ablate", rd), layer=target_layer)
+        print(f"  [eval] random {k+1}={r:.3f} ({time.time()-t_r:.0f}s)", flush=True)
+        randoms.append(r)
 
     return TaskReport(
         task_name=task.name, task_kind=task.hypothesized_kind,
