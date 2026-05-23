@@ -78,16 +78,33 @@ class HonestyTask(SteeringTask):
         return 0.5
 
     def _load_statements(self):
-        """Load factual statements, each with a known truth value.
+        """Load factual statements with truth values.
 
-        TODO(next): wire to a real source -- TruthfulQA or a curated factual set.
-        Expected schema per item: {"text": str, "truth_value": "true" | "false"}.
+        Uses TruthfulQA: each question's `best_answer` becomes a TRUE statement
+        (Q + best_answer); `incorrect_answers[0]` becomes a FALSE statement.
+        Gives a paired true/false set per TQA item.
         """
         if self.statements_path and self.statements_path.exists():
             with open(self.statements_path) as f:
                 return json.load(f)
-        return [
-            {"text": f"<honesty-placeholder-statement-{i}>",
-             "truth_value": "true" if i % 2 == 0 else "false"}
-            for i in range(100)
-        ]
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("truthfulqa/truthful_qa", "generation", split="validation")
+            out = []
+            for row in ds:
+                q = row["question"]
+                best = (row.get("best_answer") or "").strip()
+                incorrect_list = row.get("incorrect_answers") or []
+                incorrect = incorrect_list[0].strip() if incorrect_list else ""
+                if best:
+                    out.append({"text": f"{q} {best}", "truth_value": "true"})
+                if incorrect:
+                    out.append({"text": f"{q} {incorrect}", "truth_value": "false"})
+            return out
+        except Exception as e:
+            print(f"[honesty] TruthfulQA unavailable ({e}); using placeholders")
+            return [
+                {"text": f"<honesty-placeholder-statement-{i}>",
+                 "truth_value": "true" if i % 2 == 0 else "false"}
+                for i in range(100)
+            ]

@@ -81,17 +81,30 @@ class FactOverrideTask(SteeringTask):
     def _load(self):
         """Load (question, counterfactual_answer, factual_answer) triples.
 
-        TODO(next): wire to ConFiQA (counterfactual-QA dataset used by
-        ContextFocus and other context-faithfulness papers). Each example has
-        a DIFFERENT counterfactual fact, so the steering direction varies by
-        example -- the content-specific signature we're trying to detect.
+        Uses NQ-Swap (Longpre et al.) -- a Natural Questions variant where
+        each item has the original parametric answer and a substituted
+        counterfactual answer. Each example has a DIFFERENT counterfactual
+        fact -- the content-specific signature.
         """
         if self.examples_path and self.examples_path.exists():
             with open(self.examples_path) as f:
                 return json.load(f)
-        return [
-            {"question": f"<fact-override-q-{i}>",
-             "counterfactual_answer": f"<counterfactual-{i}>",
-             "factual_answer": f"<factual-{i}>"}
-            for i in range(100)
-        ]
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("pminervini/NQ-Swap", split="validation")
+            return [
+                {"question": row["question"],
+                 "counterfactual_answer": (row.get("sub_answer")
+                                            or row.get("substituted_answer") or ""),
+                 "factual_answer": (row.get("org_answer")
+                                    or row.get("original_answer") or "")}
+                for row in ds
+            ]
+        except Exception as e:
+            print(f"[fact_override] NQ-Swap unavailable ({e}); using placeholders")
+            return [
+                {"question": f"<fact-override-q-{i}>",
+                 "counterfactual_answer": f"<counterfactual-{i}>",
+                 "factual_answer": f"<factual-{i}>"}
+                for i in range(100)
+            ]

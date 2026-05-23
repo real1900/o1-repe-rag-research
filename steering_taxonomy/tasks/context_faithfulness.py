@@ -91,17 +91,32 @@ class ContextFaithfulnessTask(SteeringTask):
     def _load(self):
         """Load (question, context, substituted_answer, original_answer) examples.
 
-        TODO(next): wire to ConFiQA (the dataset ContextFocus uses). Each item
-        has a question, a counterfactual context that overrides a parametric
-        fact, the new (substituted) answer, and the original (parametric) one.
+        Uses NQ-Swap -- a Natural Questions variant with substituted contexts
+        that override the parametric answer. Used as a stand-in for ConFiQA
+        (same idea: counterfactual context, both answers known).
         """
         if self.examples_path and self.examples_path.exists():
             with open(self.examples_path) as f:
                 return json.load(f)
-        return [
-            {"question": f"<ctxfaith-q-{i}>",
-             "context": f"<counterfactual context for q-{i}>",
-             "substituted_answer": "B",
-             "original_answer": "A"}
-            for i in range(100)
-        ]
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("pminervini/NQ-Swap", split="validation")
+            return [
+                {"question": row["question"],
+                 "context": (row.get("sub_context") or row.get("substituted_context")
+                             or row.get("context") or ""),
+                 "substituted_answer": (row.get("sub_answer")
+                                         or row.get("substituted_answer") or ""),
+                 "original_answer": (row.get("org_answer")
+                                     or row.get("original_answer") or "")}
+                for row in ds
+            ]
+        except Exception as e:
+            print(f"[context_faithfulness] NQ-Swap unavailable ({e}); using placeholders")
+            return [
+                {"question": f"<ctxfaith-q-{i}>",
+                 "context": f"<counterfactual context for q-{i}>",
+                 "substituted_answer": "B",
+                 "original_answer": "A"}
+                for i in range(100)
+            ]

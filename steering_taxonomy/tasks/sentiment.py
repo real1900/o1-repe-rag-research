@@ -80,19 +80,51 @@ class SentimentTask(SteeringTask):
             return 0.5
         return float(pos_hit) / (pos_hit + neg_hit)
 
-    def _load(self):
-        """Load (prompt, positive, negative) triples.
+    # Sentiment-eliciting eval prompts (used as the prompt slot for build_eval).
+    _EVAL_PROMPTS = [
+        "I think this movie was", "The food at the restaurant was",
+        "My overall experience was", "I would say the service was",
+        "Honestly, the book was", "Looking back, my vacation was",
+        "The performance last night was", "The new app feels",
+    ]
 
-        TODO(next): wire to SST-2 or IMDB for real prompts and continuations;
-        replace the lexicon scorer with a distilbert-sst2 classifier for proper
-        sentiment evaluation.
+    def _load(self):
+        """Load (prompt, positive, negative) triples from IMDB.
+
+        Pairs positive-labeled and negative-labeled IMDB reviews by index
+        (the direction is built from the difference of labeled activations).
+        Uses a small set of standard sentiment-eliciting prompts in the
+        prompt slot. Replace the lexicon scorer with a sentiment classifier
+        when needed for stronger eval.
         """
         if self.examples_path and self.examples_path.exists():
             with open(self.examples_path) as f:
                 return json.load(f)
-        return [
-            {"prompt": f"<sentiment-placeholder-prompt-{i}>",
-             "positive": "It was wonderful and amazing.",
-             "negative": "It was terrible and awful."}
-            for i in range(100)
-        ]
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("stanfordnlp/imdb", split="train")
+            positives, negatives = [], []
+            for row in ds:
+                # IMDB labels: 0 = negative, 1 = positive
+                if row["label"] == 1 and len(positives) < 500:
+                    positives.append(row["text"])
+                elif row["label"] == 0 and len(negatives) < 500:
+                    negatives.append(row["text"])
+                if len(positives) >= 500 and len(negatives) >= 500:
+                    break
+            k = min(len(positives), len(negatives))
+            prompts = self._EVAL_PROMPTS
+            return [
+                {"prompt": prompts[i % len(prompts)],
+                 "positive": positives[i],
+                 "negative": negatives[i]}
+                for i in range(k)
+            ]
+        except Exception as e:
+            print(f"[sentiment] IMDB unavailable ({e}); using placeholders")
+            return [
+                {"prompt": f"<sentiment-placeholder-prompt-{i}>",
+                 "positive": "It was wonderful and amazing.",
+                 "negative": "It was terrible and awful."}
+                for i in range(100)
+            ]

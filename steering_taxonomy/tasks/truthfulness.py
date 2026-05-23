@@ -77,19 +77,26 @@ class TruthfulnessTask(SteeringTask):
         return 0.5  # off-topic / unscoreable
 
     def _load(self):
-        """Load TruthfulQA-style examples.
-
-        TODO(next): wire to HF datasets `truthful_qa` ("generation" split) --
-        every item has `question`, `best_answer`, `correct_answers` (list),
-        `incorrect_answers` (list).
-        """
+        """Load TruthfulQA examples (generation split via HF `datasets`)."""
         if self.tqa_path and self.tqa_path.exists():
             with open(self.tqa_path) as f:
                 return json.load(f)
-        return [
-            {"question": f"<truthfulness-placeholder-q-{i}>",
-             "best_answer": "yes",
-             "correct_answers": ["yes", "indeed"],
-             "incorrect_answers": ["no", "false"]}
-            for i in range(100)
-        ]
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("truthfulqa/truthful_qa", "generation", split="validation")
+            return [
+                {"question": row["question"],
+                 "best_answer": row.get("best_answer", ""),
+                 "correct_answers": row.get("correct_answers") or [],
+                 "incorrect_answers": row.get("incorrect_answers") or []}
+                for row in ds
+            ]
+        except Exception as e:
+            print(f"[truthfulness] TruthfulQA unavailable ({e}); using placeholders")
+            return [
+                {"question": f"<truthfulness-placeholder-q-{i}>",
+                 "best_answer": "yes",
+                 "correct_answers": ["yes", "indeed"],
+                 "incorrect_answers": ["no", "false"]}
+                for i in range(100)
+            ]

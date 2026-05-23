@@ -77,16 +77,40 @@ class RefusalTask(SteeringTask):
         c = completion.lower()
         return float(any(phrase in c for phrase in REFUSAL_PHRASES))
 
-    # ---- data loading (placeholder; real implementation pulls AdvBench / Alpaca) ----
+    # ---- data loading: AdvBench (harmful) + filtered Alpaca (harmless) ----
     def _load(self, path, source):
-        """Load prompts from a json file, or fall back to placeholders for smoke tests.
-
-        TODO(next): wire this up to the `datasets` library --
-        `walledai/AdvBench` and a filtered `tatsu-lab/alpaca` subset --
-        so the corpus is one-command reproducible.
-        """
+        """Load prompts from a json path, else pull the appropriate HF dataset."""
         if path and path.exists():
             with open(path) as f:
                 return json.load(f)
-        # Placeholder so the interface is testable end-to-end without data files.
+        if source == self.HARMFUL_SOURCE:
+            return self._load_advbench()
+        if source == self.HARMLESS_SOURCE:
+            return self._load_alpaca()
         return [f"<{source}-placeholder-prompt-{i}>" for i in range(100)]
+
+    def _load_advbench(self):
+        """AdvBench harmful prompts (Zou et al., 2023). Public HF dataset."""
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("walledai/AdvBench", split="train")
+            return [row["prompt"] for row in ds]
+        except Exception as e:
+            print(f"[refusal] AdvBench unavailable ({e}); using placeholders")
+            return [f"<advbench-placeholder-{i}>" for i in range(100)]
+
+    def _load_alpaca(self):
+        """Stanford Alpaca harmless instructions; take 1000 input-free entries."""
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("tatsu-lab/alpaca", split="train")
+            prompts = []
+            for row in ds:
+                if not row.get("input"):  # prefer simple instructions w/o extra input
+                    prompts.append(row["instruction"])
+                if len(prompts) >= 1000:
+                    break
+            return prompts
+        except Exception as e:
+            print(f"[refusal] Alpaca unavailable ({e}); using placeholders")
+            return [f"<alpaca-placeholder-{i}>" for i in range(1000)]
