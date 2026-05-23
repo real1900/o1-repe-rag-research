@@ -71,19 +71,60 @@ class PolitenessTask(SteeringTask):
             return 0.5
         return float(pol) / (pol + rud)
 
+    # Templated polite/rude completions. Each polite response uses several
+    # POLITE_MARKERS; each rude response uses several RUDE_MARKERS. The
+    # variety keeps the contrast direction from collapsing to a single phrase.
+    _POLITE_RESPONSES = [
+        "Thank you for asking. I'd be happy to help with that. Please let me know if you need anything else.",
+        "Certainly, I would be delighted to assist. Kindly let me know how I can be of further service.",
+        "Of course. I appreciate the question and I'd be happy to walk you through it.",
+        "Please allow me a moment. I would be glad to provide a thorough response, thank you.",
+    ]
+    _RUDE_RESPONSES = [
+        "Whatever, just deal with it. That's a stupid question.",
+        "Ugh, no way. Figure it out yourself, idiot.",
+        "Shut up, that's ridiculous. I'm not doing that.",
+        "Ugh, whatever. This is so stupid, deal with it.",
+    ]
+
     def _load(self):
         """Load (prompt, polite, rude) triples.
 
-        TODO(next): source / curate a politeness corpus or generate pairs via
-        an LLM with explicit register prompts (e.g., GoEmotions has politeness
-        signals; Stanford Politeness Corpus is the classic source).
+        Uses Alpaca's instruction set as the prompt slot and templates each
+        instruction against rotating polite / rude response patterns. This
+        produces real, varied user prompts paired with stylistically clean
+        register contrasts (polite uses many POLITE_MARKERS; rude uses many
+        RUDE_MARKERS), which is what the steering direction needs to isolate
+        the register axis.
         """
         if self.examples_path and self.examples_path.exists():
             with open(self.examples_path) as f:
                 return json.load(f)
-        return [
-            {"prompt": f"<politeness-prompt-{i}>",
-             "polite": "Thank you, I appreciate your time.",
-             "rude": "Whatever, deal with it."}
-            for i in range(100)
-        ]
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("tatsu-lab/alpaca", split="train")
+            prompts = []
+            for row in ds:
+                instr = (row.get("instruction") or "").strip()
+                inp = (row.get("input") or "").strip()
+                if not instr or inp:
+                    continue
+                prompts.append(instr)
+                if len(prompts) >= 600:
+                    break
+            polite = self._POLITE_RESPONSES
+            rude = self._RUDE_RESPONSES
+            return [
+                {"prompt": p,
+                 "polite": polite[i % len(polite)],
+                 "rude": rude[i % len(rude)]}
+                for i, p in enumerate(prompts)
+            ]
+        except Exception as e:
+            print(f"[politeness] Alpaca unavailable ({e}); using placeholders")
+            return [
+                {"prompt": f"<politeness-prompt-{i}>",
+                 "polite": self._POLITE_RESPONSES[i % len(self._POLITE_RESPONSES)],
+                 "rude": self._RUDE_RESPONSES[i % len(self._RUDE_RESPONSES)]}
+                for i in range(100)
+            ]

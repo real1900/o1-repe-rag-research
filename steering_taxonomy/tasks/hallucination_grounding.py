@@ -76,20 +76,53 @@ class HallucinationGroundingTask(SteeringTask):
         c = completion.lower()
         return float(any(p in c for p in GROUNDING_PHRASES))
 
+    # Rotated grounding phrases so the positive direction isn't a single
+    # tokenized phrase ("I'm not sure...").
+    _GROUNDED_RESPONSES = [
+        "I'm not sure about that.",
+        "I don't have that information.",
+        "I cannot confirm that with certainty.",
+        "I'm not aware of the specifics.",
+    ]
+
     def _load(self):
         """Load (question, grounded, confabulated) triples.
 
-        TODO(next): source questions where small/mid models reliably
-        confabulate (e.g., long-tail factual queries, fictional entity
-        questions). Pair each with both a grounded refusal and the model's
-        own confabulation harvested via a prior pass.
+        Uses TruthfulQA: each question is a known hallucination trap (the
+        common misconception is the wrong answer). The "confabulated" slot
+        is the first incorrect_answer (a confident-but-wrong assertion);
+        the "grounded" slot is a rotated ignorance/uncertainty phrase. This
+        gives us paired (grounded, confabulated) responses to the SAME
+        question -- the contrast for the steering direction.
         """
         if self.examples_path and self.examples_path.exists():
             with open(self.examples_path) as f:
                 return json.load(f)
+        try:
+            from datasets import load_dataset
+            ds = load_dataset("truthfulqa/truthful_qa", "generation", split="validation")
+            grounded = self._GROUNDED_RESPONSES
+            out = []
+            for i, row in enumerate(ds):
+                q = (row.get("question") or "").strip()
+                incorrect_list = row.get("incorrect_answers") or []
+                if not (q and incorrect_list):
+                    continue
+                confab = incorrect_list[0].strip()
+                if not confab:
+                    continue
+                out.append({
+                    "question": q,
+                    "grounded": grounded[i % len(grounded)],
+                    "confabulated": confab,
+                })
+            if out:
+                return out
+        except Exception as e:
+            print(f"[hallucination_grounding] TruthfulQA unavailable ({e}); using placeholders")
         return [
             {"question": f"<halluc-q-{i}>",
-             "grounded": "I'm not sure about that.",
+             "grounded": self._GROUNDED_RESPONSES[i % len(self._GROUNDED_RESPONSES)],
              "confabulated": "The answer is definitely 42."}
             for i in range(100)
         ]
