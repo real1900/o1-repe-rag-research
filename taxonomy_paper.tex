@@ -368,6 +368,23 @@ neither the factual nor the counterfactual answer; the metric
 moves toward 0.5 from a 0.24 baseline). This is direction-specific
 perturbation, not goal-directed steering.
 
+\paragraph{Threshold sensitivity.}
+A 75\% rule based on hand-tuned thresholds invites the question: is
+that number an artifact of the threshold choice? We swept
+$\tau_{\text{stab}}$ over $[0.50, 0.95]$ and $\tau_{\text{var}}$ over
+$[0.00, 0.60]$ in steps of $0.05$. Rule accuracy stays at $0.75$
+across a sizable rectangular plateau:
+$\tau_{\text{stab}} \in [0.60, 0.75]$ and
+$\tau_{\text{var}} \in [0.05, 0.42]$. No
+threshold choice exceeds $0.75$ (with $N = 12$ tasks, three rule
+violations are the floor unless one of them gets reclassified, which
+the rule cannot do without an additional feature). The chosen
+thresholds $(0.70, 0.30)$ sit in the middle of the plateau; small
+perturbations in either direction leave accuracy unchanged. We read
+this as the rule being robust to threshold choice within the small-N
+limit of our corpus, not as the rule being optimal in the asymptotic
+sense. Larger corpora are required for sharper threshold estimates.
+
 \paragraph{Behavioral does not imply steerable; content-specific does
 not imply unsteerable.} Our results invalidate two folk-theoretic
 claims often made in the activation-steering literature. Honesty and
