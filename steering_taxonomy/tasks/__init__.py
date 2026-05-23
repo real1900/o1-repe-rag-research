@@ -8,6 +8,9 @@ from steering_taxonomy.tasks.honesty import HonestyTask
 from steering_taxonomy.tasks.sycophancy import SycophancyTask
 from steering_taxonomy.tasks.sentiment import SentimentTask
 from steering_taxonomy.tasks.truthfulness import TruthfulnessTask
+from steering_taxonomy.tasks.rag_distractor import RagDistractorTask
+from steering_taxonomy.tasks.fact_override import FactOverrideTask
+from steering_taxonomy.tasks.topic_suppression import TopicSuppressionTask
 
 # Behavioral tasks (expected: stable axis, steering succeeds).
 BEHAVIORAL_TASKS = [
@@ -18,4 +21,14 @@ BEHAVIORAL_TASKS = [
     TruthfulnessTask,
 ]
 
-ALL_TASKS = BEHAVIORAL_TASKS + []  # content-specific + borderline added in later commits
+# Content-specific tasks (expected: unstable axis, steering fails).
+CONTENT_SPECIFIC_TASKS = [
+    RagDistractorTask,
+    FactOverrideTask,
+    TopicSuppressionTask,
+]
+
+# Borderline tasks (the discriminating cases) -- added in later commits.
+BORDERLINE_TASKS: list = []
+
+ALL_TASKS = BEHAVIORAL_TASKS + CONTENT_SPECIFIC_TASKS + BORDERLINE_TASKS
