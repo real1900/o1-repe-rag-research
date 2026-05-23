@@ -28,22 +28,32 @@ def smoke_one(task_cls):
         traceback.print_exc()
         return False
 
-    # _load
+    # _load (optional: not all tasks expose a zero-arg loader -- refusal
+    # has a multi-source loader. build_pairs/build_eval exercise the loader
+    # transitively so we skip rather than fail if direct call doesn't fit.)
+    rows = None
     try:
-        rows = task._load() if hasattr(task, "_load") else (
-            task._load_statements() if hasattr(task, "_load_statements") else None)
-        if rows is None:
-            print("  no _load / _load_statements method found")
-            return False
-        print(f"  _load: {len(rows)} rows")
-        if rows:
-            print(f"  sample row keys: {list(rows[0].keys())}")
-            for k, v in rows[0].items():
-                print(f"    {k}: {_shorten(v)}")
+        if hasattr(task, "_load"):
+            rows = task._load()
+        elif hasattr(task, "_load_statements"):
+            rows = task._load_statements()
+    except TypeError:
+        print("  _load: needs args (skipping direct call; build_pairs/eval still exercises it)")
     except Exception:
         print("  _load FAILED")
         traceback.print_exc()
         return False
+    if rows is not None:
+        print(f"  _load: {len(rows)} rows")
+        if rows:
+            sample = rows[0]
+            keys = list(sample.keys()) if isinstance(sample, dict) else None
+            print(f"  sample row keys: {keys}")
+            if isinstance(sample, dict):
+                for k, v in sample.items():
+                    print(f"    {k}: {_shorten(v)}")
+            else:
+                print(f"    {_shorten(sample)}")
 
     # build_pairs
     try:

@@ -100,7 +100,8 @@ class ContextFaithfulnessTask(SteeringTask):
                 return json.load(f)
         try:
             from datasets import load_dataset
-            ds = load_dataset("pminervini/NQ-Swap", split="validation")
+            # NQ-Swap exposes only a `dev` split (no `validation` alias).
+            ds = load_dataset("pminervini/NQ-Swap", split="dev")
             return [
                 {"question": row["question"],
                  "context": (row.get("sub_context") or row.get("substituted_context")
