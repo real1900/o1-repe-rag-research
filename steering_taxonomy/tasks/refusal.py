@@ -90,14 +90,34 @@ class RefusalTask(SteeringTask):
         return [f"<{source}-placeholder-prompt-{i}>" for i in range(100)]
 
     def _load_advbench(self):
-        """AdvBench harmful prompts (Zou et al., 2023). Public HF dataset."""
+        """AdvBench harmful prompts (Zou et al., 2023).
+
+        Primary: HF dataset `walledai/AdvBench` (may be gated now).
+        Fallback: the canonical CSV in the llm-attacks GitHub repo, which
+        is the official source and not gated.
+        """
         try:
             from datasets import load_dataset
             ds = load_dataset("walledai/AdvBench", split="train")
             return [row["prompt"] for row in ds]
         except Exception as e:
-            print(f"[refusal] AdvBench unavailable ({e}); using placeholders")
-            return [f"<advbench-placeholder-{i}>" for i in range(100)]
+            print(f"[refusal] HF walledai/AdvBench unavailable ({e}); "
+                  "falling back to llm-attacks GitHub CSV")
+        try:
+            import csv as _csv
+            import io
+            import urllib.request
+            url = ("https://raw.githubusercontent.com/llm-attacks/llm-attacks/"
+                   "main/data/advbench/harmful_behaviors.csv")
+            with urllib.request.urlopen(url, timeout=30) as f:
+                text = f.read().decode("utf-8")
+            reader = _csv.DictReader(io.StringIO(text))
+            prompts = [row["goal"].strip() for row in reader if row.get("goal")]
+            if prompts:
+                return prompts
+        except Exception as e:
+            print(f"[refusal] AdvBench GitHub CSV unavailable ({e}); using placeholders")
+        return [f"<advbench-placeholder-{i}>" for i in range(100)]
 
     def _load_alpaca(self):
         """Stanford Alpaca harmless instructions; take 1000 input-free entries."""
