@@ -93,12 +93,17 @@ class FactOverrideTask(SteeringTask):
             from datasets import load_dataset
             # NQ-Swap exposes only a `dev` split (no `validation` alias).
             ds = load_dataset("pminervini/NQ-Swap", split="dev")
+            def _first(v):
+                # NQ-Swap stores answers as lists; collapse to the first string.
+                if isinstance(v, list):
+                    return v[0].strip() if v else ""
+                return (v or "").strip()
             return [
                 {"question": row["question"],
-                 "counterfactual_answer": (row.get("sub_answer")
-                                            or row.get("substituted_answer") or ""),
-                 "factual_answer": (row.get("org_answer")
-                                    or row.get("original_answer") or "")}
+                 "counterfactual_answer": _first(row.get("sub_answer")
+                                                  or row.get("substituted_answer")),
+                 "factual_answer": _first(row.get("org_answer")
+                                          or row.get("original_answer"))}
                 for row in ds
             ]
         except Exception as e:

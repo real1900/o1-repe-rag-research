@@ -102,14 +102,19 @@ class ContextFaithfulnessTask(SteeringTask):
             from datasets import load_dataset
             # NQ-Swap exposes only a `dev` split (no `validation` alias).
             ds = load_dataset("pminervini/NQ-Swap", split="dev")
+            def _first(v):
+                # NQ-Swap stores answers as lists; collapse to the first string.
+                if isinstance(v, list):
+                    return v[0].strip() if v else ""
+                return (v or "").strip()
             return [
                 {"question": row["question"],
                  "context": (row.get("sub_context") or row.get("substituted_context")
                              or row.get("context") or ""),
-                 "substituted_answer": (row.get("sub_answer")
-                                         or row.get("substituted_answer") or ""),
-                 "original_answer": (row.get("org_answer")
-                                     or row.get("original_answer") or "")}
+                 "substituted_answer": _first(row.get("sub_answer")
+                                              or row.get("substituted_answer")),
+                 "original_answer": _first(row.get("org_answer")
+                                           or row.get("original_answer"))}
                 for row in ds
             ]
         except Exception as e:
