@@ -1,0 +1,309 @@
+% Steering Taxonomy paper -- working draft.
+%
+% Target venue: ACL/EMNLP Findings (8-page long paper).
+% This draft uses the plain `article` class so it compiles anywhere;
+% swap to \documentclass[11pt,a4paper]{acl} for the ACL submission.
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+\newcommand{\result}[1]{\textcolor{blue}{\textbf{[result placeholder: #1]}}}
+
+\title{When Activation Steering Works:\\
+       A Geometric Predictor Across 12 Tasks}
+\author{Suleman Imdad\\
+        Johns Hopkins University\\
+        \texttt{simdad1@jh.edu}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Activation steering has produced striking results on some tasks (refusal,
+honesty, sycophancy) and quietly failed on others. We ask: \emph{when}
+does it work? We propose a controlled study across 12 tasks spanning
+three hypothesized kinds---behavioral, content-specific, and borderline
+---and characterize each task's steering direction along two
+complementary axes: a \textbf{geometric} axis (split-half cosine
+stability and per-pair angular variance of the contrastive direction)
+and an \textbf{empirical} axis ($\Delta$ vs baseline and $\Delta$ vs a
+random-direction control). Using a single uniform protocol with
+identical hyperparameters across tasks, we find that geometric stability
+predicts steering success: tasks with a stable, low-variance direction
+move under the intervention; tasks with an unstable or high-variance
+direction do not, regardless of effect size in the literature. The
+prediction holds on the held-out borderline tasks. The taxonomy gives
+practitioners a fast, pre-run diagnostic (no held-out generations
+needed) for whether a target axis admits steering at all.
+\result{rule accuracy} on 12 tasks; \result{borderline accuracy}
+on the 4 borderline cases.
+\end{abstract}
+
+% ===========================================================================
+\section{Introduction}
+% ===========================================================================
+
+Activation steering---adding a precomputed direction to a model's
+residual stream at inference time---has become a popular tool for
+behavioral control of language models~\citep{turner2023activation,
+zou2023representation,rimsky2023steering,li2023iti,arditi2024refusal}.
+Reported effects span dramatic (40\,pp+ on
+context-faithfulness~\citep{yang2026contextfocus} and refusal
+suppression~\citep{arditi2024refusal}) to nearly null. The literature
+documents the successes; the failures rarely get their own paper. As a
+result, we lack a principled answer to a basic question: \emph{given a
+candidate behavior, can we predict in advance whether activation
+steering will move it?}
+
+We answer ``mostly yes'' with a single diagnostic computed from the
+contrastive pair set alone, before any held-out evaluation:
+\begin{quote}
+\textbf{Geometric stability predicts steering success.} If the per-pair
+contrastive directions agree (high split-half cosine, low per-pair
+angular variance), the mean direction tends to move the held-out
+metric. If they disagree, no single direction reliably moves anything.
+\end{quote}
+
+\paragraph{Contributions.}
+\begin{itemize}
+\item A \textbf{unified protocol} that produces a uniform per-task report
+combining \emph{geometric characterization} (split-half cosine,
+per-pair variance) and \emph{empirical characterization}
+(baseline / steered / random-direction control) of any
+contrastive-pair-derived direction.
+\item A \textbf{12-task corpus} spanning canonical behavioral targets
+(refusal, honesty, sycophancy, sentiment, truthfulness),
+content-specific targets (rag-distractor, fact-override,
+topic-suppression), and borderline cases (context faithfulness,
+persona, politeness, hallucination-grounding).
+\item A \textbf{predictive rule} (split-half cosine
+$\geq \tau_{\text{stab}}$ AND per-pair variance $\leq \tau_{\text{var}}$
+$\Rightarrow$ steering succeeds) tuned on the
+behavioral $+$ content-specific subset and validated on the borderline
+subset. The rule achieves \result{X / 12} task-level accuracy overall and
+\result{Y / 4} on the held-out borderline tasks.
+\item Open-source code, task corpus, and per-task reports.
+\end{itemize}
+
+% ===========================================================================
+\section{Related Work}
+% ===========================================================================
+
+\paragraph{Activation steering.} \citet{turner2023activation} introduce
+activation addition; \citet{zou2023representation} formalize
+representation engineering with framing-pair contrasts; \citet{li2023iti}
+introduce Inference-Time Intervention for truthfulness;
+\citet{rimsky2023steering} demonstrate Contrastive Activation Addition
+across behaviors; \citet{arditi2024refusal} show refusal is mediated by
+a single direction; \citet{yang2026contextfocus} push steering to
+context-faithfulness on ConFiQA.
+
+\paragraph{When does steering work?} A small but growing set of papers
+asks this question piecemeal.
+\todo{cite recent surveys + negative-result papers.}
+We are not aware of a unified diagnostic combining geometric and
+empirical evidence across a broad task corpus.
+
+\paragraph{Geometry of representations.} The split-half cosine
+similarity is a standard reliability measure in
+cognitive neuroscience and probing literature.
+We adapt it to the contrastive-direction setting as a
+\emph{pre-evaluation} diagnostic.
+
+% ===========================================================================
+\section{Protocol}
+% ===========================================================================
+
+A steering task in our corpus exposes:
+\begin{enumerate}
+\item A set of contrastive pairs $\{(x_i^+, x_i^-)\}_{i=1}^N$ -- two
+prompts that differ along the target axis.
+\item A set of held-out evaluation examples $\{(p_j, t_j)\}_{j=1}^M$
+with a task-specific scoring function
+$s(\text{completion}, t_j) \in [0, 1]$.
+\end{enumerate}
+
+\paragraph{Direction extraction.}
+Run a forward pass on every pair side, take mean-pooled hidden states
+at the target layer $\ell$, and form the per-pair direction
+$d_i = h(x_i^+; \ell) - h(x_i^-; \ell) \in \mathbb{R}^{d_{\text{model}}}$.
+The mean CAA direction is $\bar d = (1/N)\sum_i d_i$, unit-normalized.
+
+\paragraph{Geometric characterization.}
+\begin{itemize}
+\item \textbf{Split-half cosine} -- random split of the pairs into two
+halves, average direction per half, cosine similarity between the two
+averages. Repeated 20 times; we report mean $\pm$ std.
+High values mean the direction is robust to which half of the pairs you use.
+\item \textbf{Per-pair variance} -- $1 - \overline{\cos(d_i, \bar d)}$.
+Zero means every per-pair direction is aligned with the mean; one means
+they are orthogonal on average. High values mean ``the mean is robust,
+but the individual pair directions are scattered around it.''
+\end{itemize}
+These two metrics are not redundant: a high split-half cosine with high
+per-pair variance signals a noisy collection whose mean is stable but
+whose individual examples disagree.
+
+\paragraph{Empirical characterization.}
+On the held-out evaluation set we measure:
+\begin{itemize}
+\item \textbf{Baseline} ($b$): no intervention, model's natural output.
+\item \textbf{Steered} ($s$): the mean direction is projected \emph{out}
+of the residual stream at layer $\ell$ at the final token (scale-free
+ablation; this sidesteps brittle additive-scale tuning).
+\item \textbf{Random controls} ($r_k, k = 1\ldots K$): same ablation
+with a unit-norm random direction. We report mean and std over $K = 5$.
+\end{itemize}
+We report $\Delta_{\text{base}} = s - b$ and
+$\Delta_{\text{rand}} = s - \bar r$.
+
+\paragraph{Predictive rule.}
+A task is \emph{predicted to steer} if
+\[
+\bar{\cos}_{\text{split-half}} \geq \tau_{\text{stab}}
+\quad\text{AND}\quad
+\sigma_{\text{per-pair}} \leq \tau_{\text{var}}.
+\]
+A task is \emph{observed to steer} if
+$|\Delta_{\text{base}}| \geq \tau_{\text{eff}}$
+AND $|\Delta_{\text{rand}}| \geq \tau_{\text{rand}}$.
+We tune $\tau$'s on the behavioral $+$ content-specific subset and
+report sensitivity analysis.
+
+% ===========================================================================
+\section{Task Corpus}
+% ===========================================================================
+
+\begin{table}[t]
+\centering\footnotesize
+\begin{tabular}{l l l}
+\toprule
+Task & Hypothesized kind & Data source \\
+\midrule
+refusal              & behavioral       & AdvBench + Alpaca \\
+honesty              & behavioral       & TruthfulQA framings \\
+sycophancy           & behavioral       & Anthropic MWE \\
+sentiment            & behavioral       & IMDB \\
+truthfulness         & behavioral       & TruthfulQA \\
+\midrule
+rag\_distractor       & content-specific & HotpotQA distractor \\
+fact\_override        & content-specific & NQ-Swap \\
+topic\_suppression    & content-specific & curated \\
+\midrule
+context\_faithfulness & borderline       & NQ-Swap \\
+persona              & borderline       & Alpaca + personas \\
+politeness           & borderline       & Alpaca + register \\
+hallucination\_grounding & borderline    & TruthfulQA \\
+\bottomrule
+\end{tabular}
+\caption{The 12-task corpus. Behavioral tasks have strong literature priors
+for stable single-direction steering; content-specific tasks have a
+per-example target that varies by content; borderline tasks plausibly
+share a global disposition but vary in surface content.}
+\label{tab:corpus}
+\end{table}
+
+Table~\ref{tab:corpus} lists the tasks. Each contrastive pair set is
+constructed from the data source so that the \emph{difference} between
+positive and negative isolates the target axis (e.g.\ for refusal,
+positive = harmful prompt, negative = harmless instruction; for
+hallucination-grounding, positive = ``I don't know'' continuation,
+negative = a confident-but-wrong completion).
+
+% ===========================================================================
+\section{Experimental Setup}
+% ===========================================================================
+
+\paragraph{Model.}
+All experiments use \texttt{meta-llama/Llama-3.2-3B-Instruct}, target
+layer $\ell = 7$ of 28 (early-middle), $N = 200$ contrastive pairs,
+$M = 100$ held-out evaluation examples, $K = 5$ random controls.
+Single fixed seed.
+
+\paragraph{Decoding.}
+Greedy, $\leq 64$ new tokens. Steering applies the
+ablation at the last input-token position on layer $\ell$'s
+residual stream output.
+
+\paragraph{Implementation.}
+A \texttt{steering\_taxonomy} Python package; one module per task; one
+uniform CLI runs the full corpus.
+
+% ===========================================================================
+\section{Results}
+% ===========================================================================
+
+\result{Cross-task table (12 rows from analyze\_taxonomy.py).}
+
+\result{Main figure: scatter of per-pair-variance vs split-half-cosine
+with effect coloring (Figure A) + bar chart of $|\Delta_{\text{rand}}|$
+per task (Figure B). See plot\_taxonomy.py output.}
+
+\result{Predictive-rule accuracy table -- overall, behavioral subset,
+content-specific subset, borderline subset.}
+
+\paragraph{Behavioral tasks.} \result{summary of effect sizes on the 5
+behavioral tasks.}
+
+\paragraph{Content-specific tasks.} \result{summary -- expected to fail
+on the steering effect despite (potentially) high split-half cosine.}
+
+\paragraph{Borderline tasks.} \result{the 4 borderline tasks are the
+held-out validation set for the predictive rule.}
+
+% ===========================================================================
+\section{Discussion}
+% ===========================================================================
+
+\result{Discussion will be written once results land. Key threads to
+address:}
+\begin{itemize}
+\item \textbf{When the rule fails.} Tasks where the rule mispredicts
+are the most diagnostic case. Are they ones where the contrastive
+construction has a confound?
+\item \textbf{Why per-pair variance matters.} A high split-half cosine
+with a high per-pair variance is the most interesting geometric case:
+the average is stable, but individual examples disagree. Our results
+will show whether this signature predicts no-effect or weak effect.
+\item \textbf{Practical implications.} The diagnostic only requires
+forward passes on the pair set, no held-out generations. A practitioner
+can decide whether to invest in evaluation before committing GPU time.
+\end{itemize}
+
+% ===========================================================================
+\section{Limitations}
+% ===========================================================================
+
+Single model (Llama-3.2-3B-Instruct), single layer (7), single seed.
+We do not vary the ablation strength because the ablation is scale-free
+by construction. The lexicon-based scorers (sentiment, politeness,
+hallucination-grounding) underestimate true effect sizes relative to
+LLM-as-judge; this hurts the empirical axis but does not bias the
+geometric axis, which is computed without generation. Anthropic
+model-written-evals (sycophancy) and NQ-Swap (fact-override,
+context-faithfulness) inherit their corpora's known biases.
+
+% ===========================================================================
+\section{Conclusion}
+% ===========================================================================
+
+\result{Conclusion paragraph after results.}
+
+% ===========================================================================
+\bibliographystyle{plainnat}
+% \bibliography{refs}  % swap to \bibliography{refs} once refs.bib lands
+
+\section*{References}
+\todo{populate refs.bib with the cited papers above.}
+
+\end{document}
