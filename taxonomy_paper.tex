@@ -528,14 +528,29 @@ Table~\ref{tab:crossfamily} reports the side-by-side comparison.
 
 \paragraph{The geometric signature is a property of the contrast,
 not of the model.}
-On all 12 tasks the $(\text{cos}, \text{var})$ pair agrees between
-Llama and Qwen to within $\pm 0.05$. Two completely different
-residual streams, two different tokenizers, two different positional
-encodings, applied to the same contrastive pair set, recover an
-almost identical geometric reading. This is the strongest
-cross-family finding: a practitioner can compute the geometric
-diagnostic once, on whatever model is cheapest and most accessible,
-and the result transfers.
+On all 12 tasks the $(\bar{\cos}, \sigma)$ pair agrees between
+Llama-3B and Qwen-3B to within $\pm 0.05$
+(max $|\Delta_{\bar{\cos}}| = 0.023$,
+max $|\Delta_{\sigma}| = 0.039$). Two completely different residual
+streams, two different tokenizers, two different positional encodings,
+applied to the same contrastive pair set, recover an almost identical
+geometric reading. Figure~\ref{fig:crossmodel} visualizes this as a
+$45^\circ$-line scatter: every point sits on the diagonal.
+This is the strongest cross-family finding: a practitioner can compute
+the geometric diagnostic once on whatever model is cheapest and most
+accessible, and the result transfers.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{cross_model_agreement.pdf}
+\caption{Cross-model agreement on the geometric features.
+\textbf{Left:} split-half cosine, Llama-3B (layer 7) vs.~Qwen-3B
+(layer 9), one point per task. \textbf{Right:} per-pair variance.
+Both panels show essentially all points sitting on the $y{=}x$
+diagonal (shaded band: $\pm 0.05$). The geometric features are
+a property of the contrast construction, not the model.}
+\label{fig:crossmodel}
+\end{figure*}
 
 \paragraph{Effect-size magnitudes are model-dependent.}
 The Qwen intervention is stronger on refusal ($-$0.910 vs.~$-$0.650)
