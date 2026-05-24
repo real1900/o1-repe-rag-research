@@ -399,6 +399,25 @@ stable mean direction extracted from per-pair directions that vary
 widely (i.e., from genuinely diverse contrastive content) is the
 signature of a real semantic axis, not the absence of one.
 
+\paragraph{Continuous predictors agree with the binary rule.}
+Treating the rule as a binary classifier loses information. Pooled
+across Llama and Qwen ($N{=}24$ tasks $\times$ models), Pearson
+correlations between candidate geometric predictors and the empirical
+effect size $|\Delta_{\text{rand}}|$ are:
+$r(\bar{\cos}, |\Delta_{\text{rand}}|) = +0.10$,
+$r(\sigma, |\Delta_{\text{rand}}|) = +0.25$,
+$r(\bar{\cos}\cdot\sigma, |\Delta_{\text{rand}}|) = +0.41$
+($p \approx 0.046$),
+$r(\text{rule}, |\Delta_{\text{rand}}|) = +0.45$
+($p \approx 0.026$).
+Three things stand out. (i)~$\bar{\cos}$ alone is not predictive
+because most tasks saturate near $\bar{\cos} \approx 1$.
+(ii)~$\sigma$ alone is moderately predictive.
+(iii)~The composite $\bar{\cos}\cdot\sigma$ recovers most of the
+binary rule's predictive power as a continuous measure, suggesting
+the rule is not a knife-edge classifier but a coarsening of a real
+underlying continuous relationship.
+
 \paragraph{Steering succeeds regardless of task ``kind.''}
 The clean steering effects
 ($|\Delta_{\text{rand}}| \geq 0.3$) include the canonical behavioral
