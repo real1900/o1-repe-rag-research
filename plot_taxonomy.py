@@ -28,6 +28,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
+try:
+    from adjustText import adjust_text
+    HAVE_ADJUST_TEXT = True
+except ImportError:
+    HAVE_ADJUST_TEXT = False
+
 
 KIND_COLORS = {
     "behavioral": "#1b9e77",       # green
@@ -57,9 +63,10 @@ def steers(row, effect_thresh):
 
 
 def make_figure(rows, args):
-    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(12, 5))
+    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(14, 6))
 
     # --- Panel A: geometric scatter -----------------------------------------
+    label_texts = []
     for row in rows:
         kind = row["task_kind"]
         x = row["per_pair_variance"]
@@ -74,12 +81,31 @@ def make_figure(rows, args):
             facecolors=(KIND_COLORS.get(kind, "gray") if is_steers else "white"),
             zorder=3,
         )
-        # Annotation -- task name to the right of marker
-        ax_a.annotate(
-            row["task_name"],
-            xy=(x, y), xytext=(6, -2),
-            textcoords="offset points",
-            fontsize=8, alpha=0.9,
+        # Collect labels for adjustText (or default offset if unavailable).
+        if HAVE_ADJUST_TEXT:
+            label_texts.append(
+                ax_a.text(x, y, row["task_name"], fontsize=8, alpha=0.9, zorder=4)
+            )
+        else:
+            ax_a.annotate(
+                row["task_name"],
+                xy=(x, y), xytext=(6, -2),
+                textcoords="offset points",
+                fontsize=8, alpha=0.9,
+            )
+
+    # adjustText resolves label overlap with leader lines. We push hard
+    # because most tasks cluster at (cos~1, var~0); without aggressive
+    # repulsion the labels stack on top of each other.
+    if HAVE_ADJUST_TEXT and label_texts:
+        adjust_text(
+            label_texts,
+            ax=ax_a,
+            arrowprops=dict(arrowstyle="-", color="gray", lw=0.5, alpha=0.7),
+            expand=(2.0, 2.0),
+            force_text=(2.0, 2.0),
+            force_static=(1.5, 1.5),
+            max_move=80,
         )
 
     # Decision boundary box (the "predicted to steer" region).
