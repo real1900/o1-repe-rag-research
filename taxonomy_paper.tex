@@ -531,14 +531,16 @@ not of the model.}
 On all 12 tasks the $(\bar{\cos}, \sigma)$ pair agrees between
 Llama-3B and Qwen-3B to within $\pm 0.05$
 (max $|\Delta_{\bar{\cos}}| = 0.023$,
-max $|\Delta_{\sigma}| = 0.039$). Two completely different residual
-streams, two different tokenizers, two different positional encodings,
-applied to the same contrastive pair set, recover an almost identical
-geometric reading. Figure~\ref{fig:crossmodel} visualizes this as a
-$45^\circ$-line scatter: every point sits on the diagonal.
-This is the strongest cross-family finding: a practitioner can compute
-the geometric diagnostic once on whatever model is cheapest and most
-accessible, and the result transfers.
+max $|\Delta_{\sigma}| = 0.039$); Pearson correlations across the 12
+tasks are $r(\bar{\cos}) = +1.000$ and $r(\sigma) = +0.999$. Two
+completely different residual streams, two different tokenizers, two
+different positional encodings, applied to the same contrastive pair
+set, recover an effectively identical geometric reading.
+Figure~\ref{fig:crossmodel} visualizes this as a $45^\circ$-line
+scatter: every point sits on the diagonal. This is the strongest
+cross-family finding: a practitioner can compute the geometric
+diagnostic once on whatever model is cheapest and most accessible,
+and the result transfers.
 
 \begin{figure*}[t]
 \centering
@@ -552,16 +554,21 @@ a property of the contrast construction, not the model.}
 \label{fig:crossmodel}
 \end{figure*}
 
-\paragraph{Effect-size magnitudes are model-dependent.}
+\paragraph{Effect-size magnitudes are model-dependent, but rankings
+agree.}
 The Qwen intervention is stronger on refusal ($-$0.910 vs.~$-$0.650)
 and weaker on sentiment ($-$0.125 vs.~$-$0.435) and persona
-($-$0.300 vs.~$-$0.630). We interpret this as the model-specific
-accessibility of different behaviors: Qwen relies more heavily on
-the refusal-direction subspace and less on the persona-direction
-subspace than Llama does at the same fractional depth. The
-magnitudes will likely depend on layer choice (we did not sweep
-layers in this study) and on post-training regime (Qwen's RLHF mix
-differs from Llama's).
+($-$0.300 vs.~$-$0.630). Per-task absolute magnitudes are not
+preserved across families. The \emph{ranking} of tasks by effect
+size, however, is highly preserved: the Pearson correlation of
+$|\Delta_{\text{rand}}|$ between Llama-3B and Qwen-3B across the 12
+tasks is $r = +0.77$ (Spearman $\rho = +0.73$); the corresponding
+correlation of signed $\Delta_{\text{rand}}$ is $r = +0.83$
+($\rho = +0.88$). The model-specific component of magnitude is
+plausibly attributable to differences in layer choice (we did not
+sweep layers in this study) and post-training regime (Qwen's RLHF
+mix differs from Llama's), but the task-relative ordering is
+shared across families.
 
 \paragraph{Rule precision transfers; recall is the same.}
 Across both models, every task the rule predicts to steer
