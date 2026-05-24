@@ -39,6 +39,25 @@ def _make_ablate_hook(unit: torch.Tensor):
     return hook
 
 
+def _make_add_hook(unit: torch.Tensor, alpha: float):
+    """Build a forward hook that ADDS `alpha * unit` to every position of the
+    residual stream at this layer (additive CAA, Rimsky et al.).
+
+    The companion to _make_ablate_hook: where ablation projects the direction
+    OUT (scale-free), addition pushes the residual stream ALONG the direction
+    with an explicit coefficient. Both are useful: ablation tests whether the
+    model uses the direction; addition tests whether enhancing it amplifies
+    the corresponding behavior.
+    """
+    def hook(module, inputs, output):
+        h = output[0] if isinstance(output, tuple) else output
+        hn = h + (alpha * unit).to(h.dtype)
+        if isinstance(output, tuple):
+            return (hn,) + output[1:]
+        return hn
+    return hook
+
+
 class LlamaModelRunner:
     """Runner for Llama-style models (anything with `model.model.layers`).
 
@@ -100,18 +119,27 @@ class LlamaModelRunner:
     @torch.no_grad()
     def generate(self, prompt: str, hook: tuple | None, layer: int,
                  max_new_tokens: int = 64) -> str:
-        """Greedy continuation. `hook` is None or `("ablate", unit_direction)`."""
+        """Greedy continuation. `hook` is None, ("ablate", unit) or
+        ("add", unit, alpha) -- ablation projects unit out (scale-free);
+        addition pushes residual along unit by alpha (additive CAA)."""
         inp = self.tokenizer(prompt, return_tensors="pt", truncation=True,
                              max_length=self.max_input_tokens * 2).to(self.device)
         in_len = inp.input_ids.shape[1]
 
         handle = None
         if hook is not None:
-            mode, unit = hook
-            if mode != "ablate":
+            mode = hook[0]
+            if mode == "ablate":
+                unit = hook[1].to(self.device).float()
+                handle = self.layers[layer].register_forward_hook(
+                    _make_ablate_hook(unit))
+            elif mode == "add":
+                unit = hook[1].to(self.device).float()
+                alpha = float(hook[2])
+                handle = self.layers[layer].register_forward_hook(
+                    _make_add_hook(unit, alpha))
+            else:
                 raise NotImplementedError(f"Unknown hook mode: {mode}")
-            unit = unit.to(self.device).float()
-            handle = self.layers[layer].register_forward_hook(_make_ablate_hook(unit))
 
         try:
             out = self.model.generate(
