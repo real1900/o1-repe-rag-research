@@ -1,0 +1,18 @@
+{
+  "task_name": "sycophancy",
+  "task_kind": "behavioral",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 4,
+  "split_half_cos_mean": 0.999717628955841,
+  "split_half_cos_std": 0.00028893210083407096,
+  "per_pair_variance": 0.01770859956741333,
+  "baseline_metric": 0.0,
+  "steered_metric": 0.0,
+  "random_metric_mean": 0.0,
+  "random_metric_std": 0.0,
+  "delta_vs_baseline": 0.0,
+  "delta_vs_random": 0.0,
+  "seconds": 1616.2779188156128,
+  "notes": ""
+}

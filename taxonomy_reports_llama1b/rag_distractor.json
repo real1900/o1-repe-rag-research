@@ -1,0 +1,18 @@
+{
+  "task_name": "rag_distractor",
+  "task_kind": "content_specific",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 4,
+  "split_half_cos_mean": 0.9970298111438751,
+  "split_half_cos_std": 0.0020301862984896026,
+  "per_pair_variance": 0.7437672019004822,
+  "baseline_metric": 0.05,
+  "steered_metric": 0.05,
+  "random_metric_mean": 0.034,
+  "random_metric_std": 0.008,
+  "delta_vs_baseline": 0.0,
+  "delta_vs_random": 0.016,
+  "seconds": 750.2450079917908,
+  "notes": ""
+}
