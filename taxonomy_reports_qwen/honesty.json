@@ -1,0 +1,18 @@
+{
+  "task_name": "honesty",
+  "task_kind": "behavioral",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 9,
+  "split_half_cos_mean": 0.9996466606855392,
+  "split_half_cos_std": 7.632276308129594e-05,
+  "per_pair_variance": 0.018237173557281494,
+  "baseline_metric": 0.1,
+  "steered_metric": 0.05,
+  "random_metric_mean": 0.11199999999999999,
+  "random_metric_std": 0.009797958971132708,
+  "delta_vs_baseline": -0.05,
+  "delta_vs_random": -0.061999999999999986,
+  "seconds": 1518.1015419960022,
+  "notes": ""
+}

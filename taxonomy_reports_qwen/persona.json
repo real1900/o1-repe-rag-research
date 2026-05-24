@@ -1,0 +1,18 @@
+{
+  "task_name": "persona",
+  "task_kind": "borderline",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 9,
+  "split_half_cos_mean": 0.999897912144661,
+  "split_half_cos_std": 2.9380857246723517e-05,
+  "per_pair_variance": 0.006615877151489258,
+  "baseline_metric": 0.31,
+  "steered_metric": 0.01,
+  "random_metric_mean": 0.29000000000000004,
+  "random_metric_std": 0.012649110640673502,
+  "delta_vs_baseline": -0.3,
+  "delta_vs_random": -0.28,
+  "seconds": 1476.7796232700348,
+  "notes": ""
+}

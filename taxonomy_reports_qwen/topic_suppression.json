@@ -1,0 +1,18 @@
+{
+  "task_name": "topic_suppression",
+  "task_kind": "content_specific",
+  "n_pairs": 75,
+  "n_eval": 25,
+  "target_layer": 9,
+  "split_half_cos_mean": 0.9999392926692963,
+  "split_half_cos_std": 2.243062642745039e-05,
+  "per_pair_variance": 0.0011417865753173828,
+  "baseline_metric": 0.04,
+  "steered_metric": 0.0,
+  "random_metric_mean": 0.04,
+  "random_metric_std": 0.0,
+  "delta_vs_baseline": -0.04,
+  "delta_vs_random": -0.04,
+  "seconds": 374.73995089530945,
+  "notes": ""
+}
