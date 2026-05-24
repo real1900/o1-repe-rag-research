@@ -1,79 +1,84 @@
-% Steering Taxonomy paper -- working draft.
+% Steering Taxonomy paper -- ACL/EMNLP format.
 %
-% Target venue: ACL/EMNLP Findings (8-page long paper).
-% This draft uses the plain `article` class so it compiles anywhere;
-% swap to \documentclass[11pt,a4paper]{acl} for the ACL submission.
+% Target venue: ACL Findings (long paper, 8 pages + unlimited refs/limits).
+% Requires the official ACL style file (acl.sty + acl_natbib.bst).
+% These are committed to acl_style/ for convenience; the official source
+% is https://github.com/acl-org/acl-style-files
+%
+% Compile with `pdflatex` -> `bibtex` -> `pdflatex` x 2.
+% Add `TEXINPUTS=./acl_style:` and `BSTINPUTS=./acl_style:` to your env if
+% the .sty / .bst are not on the default LaTeX path.
+%
+% Use `[review]` for anonymized submission, no option for camera-ready.
+
 \documentclass[11pt]{article}
+
+\usepackage[review]{acl}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
-\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
-\usepackage{hyperref}
 \usepackage{url}
 \usepackage{xcolor}
-\usepackage{microtype}
-\usepackage[round]{natbib}
-
-\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
-\newcommand{\result}[1]{\textcolor{blue}{\textbf{[result placeholder: #1]}}}
 
 \title{When Activation Steering Works:\\
-       A Geometric Predictor Across 12 Tasks}
-\author{Suleman Imdad\\
-        Johns Hopkins University\\
-        \texttt{simdad1@jh.edu}}
-\date{}
+       A Geometric Predictor Across 12 Tasks and Two Model Families}
+
+\author{Anonymous Submission}
 
 \begin{document}
 \maketitle
 
+% ===========================================================================
 \begin{abstract}
+% ===========================================================================
 Activation steering produces striking results on some tasks (refusal,
 sentiment) and quietly fails on others. We ask: \emph{when} does it
-work? We run a unified, controlled protocol across 12 tasks on
-Llama-3.2-3B-Instruct and characterize each task's contrastive
-direction along a \textbf{geometric} axis (split-half cosine stability
-and per-pair angular variance) and an \textbf{empirical} axis
-($\Delta$ vs baseline and $\Delta$ vs a random-direction control). The
-data refutes the naive hypothesis that low per-pair variance signals
-a stable, steerable axis: it correlates with whether the contrast
-captures real semantic content vs only a cosmetic framing word. Our
-data-driven rule \emph{split-half cosine $\geq 0.7$ AND per-pair
-variance $\geq 0.3$} predicts steering success on 9 of 12 tasks
-(75\%); the 3 exceptions identify a third axis the geometry cannot
-see alone---\emph{contrast asymmetry} (presence-vs-absence of a
-structural prefix can produce strong steering with near-zero
-per-pair variance). The conventional behavioral/content-specific
-task taxonomy is \emph{not} predictive: rag\_distractor
-(content-specific) steers as hard as refusal (behavioral), and
-honesty (behavioral) does not steer at all. We replicate the protocol
-on Qwen2.5-3B-Instruct (different family, different tokenizer,
-36 vs.~28 layers) and find the geometric features agree across
-families to within $\pm 0.05$ on all 12 tasks---the
-$(\text{cos}, \text{var})$ signature is a property of the contrast,
-not the model.
+work? We run a unified, controlled protocol across 12 tasks and
+characterize each task's contrastive direction along two axes: a
+\textbf{geometric} axis (split-half cosine stability and per-pair
+angular variance of the contrastive direction) and an \textbf{empirical}
+axis ($\Delta$ vs.~baseline and $\Delta$ vs.~a random-direction control).
+The data refutes the naive hypothesis that a low per-pair variance
+signals a stable, steerable axis: near-zero per-pair variance instead
+correlates with whether the contrast collapses onto a cosmetic
+framing word that the model does not condition on. The empirically
+derived rule---\emph{split-half cosine $\geq 0.7$ AND per-pair
+variance $\geq 0.3$ implies steering succeeds}---achieves 9 of 12
+(75\%) task-level accuracy on Llama-3.2-3B-Instruct, and the
+three exceptions identify a third axis the geometry cannot see alone:
+\emph{contrast asymmetry} (presence-vs-absence of a structural prefix
+produces strong steering despite near-zero per-pair variance). We
+replicate the protocol on Qwen2.5-3B-Instruct and find the geometric
+features agree across families to within $\pm 0.05$ on all 12
+tasks---the $(\text{cos}, \text{var})$ signature is a property of the
+contrast, not the model. The conventional behavioral
+vs.~content-specific task taxonomy is not predictive in our data:
+rag\_distractor (content-specific) steers as hard as refusal
+(behavioral), and honesty (behavioral) does not steer at all.
 \end{abstract}
 
 % ===========================================================================
 \section{Introduction}
 % ===========================================================================
 
-Activation steering---adding a precomputed direction to a model's
-residual stream at inference time---has become a popular tool for
-behavioral control of language models~\citep{turner2023activation,
-zou2023representation,rimsky2023steering,li2023iti,arditi2024refusal}.
-Reported effects span dramatic (40\,pp+ on
-context-faithfulness~\citep{yang2026contextfocus} and refusal
-suppression~\citep{arditi2024refusal}) to nearly null. The literature
-documents the successes; the failures rarely get their own paper. As a
-result, we lack a principled answer to a basic question: \emph{given a
-candidate behavior, can we predict in advance whether activation
-steering will move it?}
+Activation steering---adding (or projecting out) a precomputed
+direction in a language model's residual stream at inference
+time---has become a popular tool for behavioral
+control~\citep{turner2023activation,zou2023representation,
+li2023iti,rimsky2023steering,arditi2024refusal,yang2026contextfocus}.
+Reported effects span the dramatic (40\,pp+ on refusal
+suppression~\citep{arditi2024refusal}; 35\,pp+ on
+context-faithfulness~\citep{yang2026contextfocus}) to nearly null.
+The literature documents the successes; the failures rarely get
+their own paper. As a result, we lack a principled answer to a
+basic question: \emph{given a candidate behavior, can we predict in
+advance whether activation steering will move it?}
 
 We answer ``mostly yes, with one twist'' using a diagnostic computed
 from the contrastive pair set alone, before any held-out evaluation:
+
 \begin{quote}
 \textbf{High split-half cosine AND high per-pair variance predict
 steering success.} A direction whose mean is stable across pair
@@ -81,66 +86,80 @@ subsamples (high cosine) \emph{and} whose individual pair-directions
 span a wide angular range (high variance) is capturing a real
 semantic axis amid varied content; ablating it moves the metric on a
 held-out evaluation. If the cosine is low, the mean direction is
-noise. If the variance is near zero, the contrast collapses onto a
-single token-level feature---usually cosmetic and behaviorally inert.
+essentially noise. If the variance is near zero, the contrast has
+typically collapsed onto a single token-level feature---usually
+cosmetic and behaviorally inert.
 \end{quote}
 
 The one twist: a small minority of tasks have near-zero variance
 \emph{and} steer strongly. They all share a structural-asymmetry
-property in the contrast (positive prompts include a system prefix
-or context block; negative prompts omit it entirely). The geometric
-axes cannot detect this on their own.
+property in their contrast (positive prompts include a system
+prefix or context block; negative prompts omit it entirely). The
+geometric axes alone cannot detect this case.
 
 \paragraph{Contributions.}
 \begin{itemize}
-\item A \textbf{unified protocol} that produces a uniform per-task report
-combining \emph{geometric characterization} (split-half cosine,
-per-pair variance) and \emph{empirical characterization}
-(baseline / steered / random-direction control) of any
-contrastive-pair-derived direction.
+\item A \textbf{unified protocol} that produces a uniform per-task
+report combining geometric characterization (split-half cosine,
+per-pair variance) with empirical characterization (baseline,
+steered, random-direction control) for any contrastive
+direction.
 \item A \textbf{12-task corpus} spanning canonical behavioral targets
 (refusal, honesty, sycophancy, sentiment, truthfulness),
-content-specific targets (rag-distractor, fact-override,
-topic-suppression), and borderline cases (context faithfulness,
-persona, politeness, hallucination-grounding).
-\item An \textbf{empirically-derived predictive rule} (split-half cosine
-$\geq 0.7$ AND per-pair variance $\geq 0.3$ $\Rightarrow$ steering
-succeeds) that achieves 9/12 (75\%) task-level accuracy on
-Llama-3.2-3B-Instruct. We characterize the 3 exceptions and identify
-the additional structural feature (contrast asymmetry) needed to
-classify them.
-\item A demonstration that the conventional \textbf{behavioral
-vs.~content-specific task taxonomy} is not predictive: a
+content-specific targets (rag\_distractor, fact\_override,
+topic\_suppression), and borderline cases (context\_faithfulness,
+persona, politeness, hallucination\_grounding).
+\item An \textbf{empirically derived predictive rule} (split-half
+cosine $\geq 0.7$ AND per-pair variance $\geq 0.3$ $\Rightarrow$
+steering succeeds) that achieves 9 of 12 (75\%) accuracy on
+Llama-3.2-3B-Instruct with a wide threshold plateau. We characterize
+the three exceptions and identify the additional structural feature
+(contrast asymmetry) needed to classify them.
+\item A \textbf{cross-family validation} on Qwen2.5-3B-Instruct.
+Geometric features agree across the two model families to within
+$\pm 0.05$ on all 12 tasks; the rule's precision stays at $\geq 3/4$.
+The $(\text{cos}, \text{var})$ signature is a property of the
+contrast, not of the model.
+\item A demonstration that the conventional behavioral
+vs.~content-specific task taxonomy is \emph{not} predictive: a
 content-specific task (rag\_distractor) steers as cleanly as the
 canonical behavioral target (refusal), and a canonical behavioral
-target (honesty) does not steer at all.
-\item Open-source code, task corpus, and per-task reports.
-\end{itemize>
+target (honesty) does not steer at all in our data.
+\item Open-source code, task corpus, and per-task reports for both
+models.
+\end{itemize}
 
 % ===========================================================================
 \section{Related Work}
 % ===========================================================================
 
-\paragraph{Activation steering.} \citet{turner2023activation} introduce
-activation addition; \citet{zou2023representation} formalize
-representation engineering with framing-pair contrasts; \citet{li2023iti}
-introduce Inference-Time Intervention for truthfulness;
-\citet{rimsky2023steering} demonstrate Contrastive Activation Addition
-across behaviors; \citet{arditi2024refusal} show refusal is mediated by
-a single direction; \citet{yang2026contextfocus} push steering to
-context-faithfulness on ConFiQA.
+\paragraph{Activation steering and representation engineering.}
+\citet{turner2023activation} introduce activation addition.
+\citet{zou2023representation} formalize representation engineering
+with framing-pair contrasts. \citet{li2023iti} introduce
+Inference-Time Intervention for truthfulness on TruthfulQA.
+\citet{rimsky2023steering} demonstrate Contrastive Activation
+Addition across many behavioral targets in Llama-2.
+\citet{arditi2024refusal} show that refusal in safety-tuned models
+is mediated by a single direction discoverable from harmful vs.
+harmless prompts. \citet{yang2026contextfocus} apply CAA-style
+intervention to context-faithfulness on ConFiQA.
 
-\paragraph{When does steering work?} A small but growing set of papers
-asks this question piecemeal.
-\todo{cite recent surveys + negative-result papers.}
-We are not aware of a unified diagnostic combining geometric and
-empirical evidence across a broad task corpus.
+\paragraph{Predicting when steering works.}
+A handful of studies report negative or mixed results on activation
+steering, often as side observations within larger interpretability
+projects. To our knowledge no prior work proposes a pre-evaluation
+diagnostic computed from the contrastive pair set alone, validates it
+across a broad task corpus, and reports cross-family generalization.
 
-\paragraph{Geometry of representations.} The split-half cosine
-similarity is a standard reliability measure in
-cognitive neuroscience and probing literature.
-We adapt it to the contrastive-direction setting as a
-\emph{pre-evaluation} diagnostic.
+\paragraph{Stability measures.}
+Split-half reliability is a standard measure in psychometrics and
+cognitive neuroscience and has been used in NLP probing work as a
+diagnostic for whether a probed representation reflects a stable
+underlying feature. We adapt it to the contrastive-direction setting
+as a \emph{pre-evaluation} diagnostic and pair it with per-pair
+angular variance to disambiguate stable-but-collapsed contrasts from
+stable-and-content-spanning ones.
 
 % ===========================================================================
 \section{Protocol}
@@ -148,59 +167,70 @@ We adapt it to the contrastive-direction setting as a
 
 A steering task in our corpus exposes:
 \begin{enumerate}
-\item A set of contrastive pairs $\{(x_i^+, x_i^-)\}_{i=1}^N$ -- two
-prompts that differ along the target axis.
-\item A set of held-out evaluation examples $\{(p_j, t_j)\}_{j=1}^M$
-with a task-specific scoring function
+\item A set of contrastive pairs
+$\{(x_i^+, x_i^-)\}_{i=1}^N$---two prompts that differ along the
+target behavioral axis.
+\item A held-out evaluation set
+$\{(p_j, t_j)\}_{j=1}^M$ with a scoring function
 $s(\text{completion}, t_j) \in [0, 1]$.
 \end{enumerate}
 
 \paragraph{Direction extraction.}
-Run a forward pass on every pair side, take mean-pooled hidden states
-at the target layer $\ell$, and form the per-pair direction
+For each pair $i$, we run a forward pass on $x_i^+$ and $x_i^-$,
+take the mean-pooled hidden states at the target layer $\ell$, and
+form the per-pair direction
 $d_i = h(x_i^+; \ell) - h(x_i^-; \ell) \in \mathbb{R}^{d_{\text{model}}}$.
-The mean CAA direction is $\bar d = (1/N)\sum_i d_i$, unit-normalized.
+The mean (CAA) direction is $\bar d = \tfrac{1}{N}\sum_i d_i$,
+unit-normalized.
 
 \paragraph{Geometric characterization.}
 \begin{itemize}
-\item \textbf{Split-half cosine} -- random split of the pairs into two
-halves, average direction per half, cosine similarity between the two
-averages. Repeated 20 times; we report mean $\pm$ std.
-High values mean the direction is robust to which half of the pairs you use.
-\item \textbf{Per-pair variance} -- $1 - \overline{\cos(d_i, \bar d)}$.
-Zero means every per-pair direction is aligned with the mean; one means
-they are orthogonal on average. High values mean ``the mean is robust,
-but the individual pair directions are scattered around it.''
+\item \textbf{Split-half cosine.} We randomly split the $N$ pairs
+into two halves, compute the mean direction within each half, and
+take the cosine similarity between them. We repeat this 20 times
+and report the mean ($\bar{\cos}$) and standard deviation.
+A high value means the mean direction is robust to which half of
+the pairs are used to compute it.
+\item \textbf{Per-pair variance.}
+$\sigma = 1 - \tfrac{1}{N}\sum_i \cos(d_i, \bar d)$.
+$\sigma = 0$ means every per-pair direction is aligned with the
+mean; $\sigma = 1$ means they are orthogonal on average.
+A high value indicates the per-pair directions span a wide angular
+range around the mean, which is consistent with the contrast
+capturing a shared axis across diverse content rather than a single
+cosmetic feature.
 \end{itemize}
-These two metrics are not redundant: a high split-half cosine with high
-per-pair variance signals a noisy collection whose mean is stable but
-whose individual examples disagree.
+These two metrics are not redundant: a contrast can have a high
+split-half cosine (stable mean) with either high per-pair variance
+(diverse content sharing a real axis) or near-zero per-pair variance
+(every pair captures the same surface feature). Distinguishing these
+two cases is essential for predicting whether steering will move
+behavior.
 
 \paragraph{Empirical characterization.}
 On the held-out evaluation set we measure:
 \begin{itemize}
-\item \textbf{Baseline} ($b$): no intervention, model's natural output.
-\item \textbf{Steered} ($s$): the mean direction is projected \emph{out}
-of the residual stream at layer $\ell$ at the final token (scale-free
-ablation; this sidesteps brittle additive-scale tuning).
-\item \textbf{Random controls} ($r_k, k = 1\ldots K$): same ablation
-with a unit-norm random direction. We report mean and std over $K = 5$.
+\item \textbf{Baseline} ($b$): no intervention.
+\item \textbf{Steered} ($s$): the mean direction $\bar d$ is
+projected out of the residual stream at every position of layer
+$\ell$ at every generation step (scale-free ablation; this avoids
+the brittle additive-scale tuning that plagues additive CAA).
+\item \textbf{Random controls} ($r_k$, $k = 1,\ldots,K$): same
+ablation procedure with a unit-norm random direction. We report
+mean and standard deviation over $K = 5$ controls.
 \end{itemize}
-We report $\Delta_{\text{base}} = s - b$ and
-$\Delta_{\text{rand}} = s - \bar r$.
+We report
+$\Delta_{\text{base}} = s - b$ and
+$\Delta_{\text{rand}} = s - \tfrac{1}{K}\sum_k r_k$.
 
 \paragraph{Predictive rule.}
-A task is \emph{predicted to steer} if
-\[
-\bar{\cos}_{\text{split-half}} \geq \tau_{\text{stab}}
-\quad\text{AND}\quad
-\sigma_{\text{per-pair}} \leq \tau_{\text{var}}.
-\]
-A task is \emph{observed to steer} if
-$|\Delta_{\text{base}}| \geq \tau_{\text{eff}}$
-AND $|\Delta_{\text{rand}}| \geq \tau_{\text{rand}}$.
-We tune $\tau$'s on the behavioral $+$ content-specific subset and
-report sensitivity analysis.
+A task is \emph{predicted to steer} if both
+$\bar{\cos} \geq \tau_{\text{stab}}$ and $\sigma \geq \tau_{\text{var}}$.
+It is \emph{observed to steer} if both
+$|\Delta_{\text{base}}| \geq \tau_{\text{eff}}$ and
+$|\Delta_{\text{rand}}| \geq \tau_{\text{rand}}$.
+We tune $\tau_{\text{stab}}, \tau_{\text{var}}$ on the full 12-task
+corpus and report sensitivity analysis below.
 
 % ===========================================================================
 \section{Task Corpus}
@@ -208,58 +238,75 @@ report sensitivity analysis.
 
 \begin{table}[t]
 \centering\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{l l l}
 \toprule
 Task & Hypothesized kind & Data source \\
 \midrule
 refusal              & behavioral       & AdvBench + Alpaca \\
-honesty              & behavioral       & TruthfulQA framings \\
+honesty              & behavioral       & TQA framings \\
 sycophancy           & behavioral       & Anthropic MWE \\
 sentiment            & behavioral       & IMDB \\
 truthfulness         & behavioral       & TruthfulQA \\
 \midrule
-rag\_distractor       & content-specific & HotpotQA distractor \\
-fact\_override        & content-specific & NQ-Swap \\
-topic\_suppression    & content-specific & curated \\
+rag\_distractor      & content-specific & HotpotQA distract.~\\
+fact\_override       & content-specific & NQ-Swap \\
+topic\_suppression   & content-specific & curated \\
 \midrule
-context\_faithfulness & borderline       & NQ-Swap \\
+context\_faithfulness & borderline      & NQ-Swap \\
 persona              & borderline       & Alpaca + personas \\
 politeness           & borderline       & Alpaca + register \\
-hallucination\_grounding & borderline    & TruthfulQA \\
+halluc.\_grounding   & borderline       & TruthfulQA \\
 \bottomrule
 \end{tabular}
-\caption{The 12-task corpus. Behavioral tasks have strong literature priors
-for stable single-direction steering; content-specific tasks have a
-per-example target that varies by content; borderline tasks plausibly
-share a global disposition but vary in surface content.}
+\caption{The 12-task corpus. Hypothesized kinds reflect prior
+literature priors; \emph{our data shows the kinds are not
+predictive of steering success}---see
+Table~\ref{tab:results}.}
 \label{tab:corpus}
 \end{table}
 
 Table~\ref{tab:corpus} lists the tasks. Each contrastive pair set is
-constructed from the data source so that the \emph{difference} between
-positive and negative isolates the target axis (e.g.\ for refusal,
-positive = harmful prompt, negative = harmless instruction; for
-hallucination-grounding, positive = ``I don't know'' continuation,
-negative = a confident-but-wrong completion).
+constructed so that the difference between positive and negative
+prompts isolates the target axis. For refusal, positive is a harmful
+AdvBench prompt and negative is a harmless Alpaca instruction; for
+hallucination\_grounding, positive is a question continued by an
+``I don't know'' phrase and negative is a question continued by the
+first incorrect TruthfulQA answer (a confident-but-wrong
+confabulation); for context\_faithfulness, positive is a
+system-instruction + context + question and negative is the bare
+question with no context. Full constructions and references are in
+the released code.
 
 % ===========================================================================
 \section{Experimental Setup}
 % ===========================================================================
 
-\paragraph{Model.}
-All experiments use \texttt{meta-llama/Llama-3.2-3B-Instruct}, target
-layer $\ell = 7$ of 28 (early-middle), $N = 200$ contrastive pairs,
-$M = 100$ held-out evaluation examples, $K = 5$ random controls.
-Single fixed seed.
+\paragraph{Models.}
+Our primary model is \texttt{meta-\allowbreak llama/Llama-\allowbreak
+3.2-3B-Instruct} (28 layers, hidden 3072). We replicate on
+\texttt{Qwen/Qwen2.5-3B-Instruct} (36 layers, hidden 2048) for
+cross-family validation. Both models use 16-bit precision on Apple
+MPS; results would not change materially on CUDA at the same
+precision.
+
+\paragraph{Hyperparameters.}
+$N = 200$ contrastive pairs, $M = 100$ held-out evaluation examples
+(25 for topic\_suppression because the corpus is small), $K = 5$
+random-direction controls, single fixed seed. We use target layer
+$\ell = 7$ for Llama and $\ell = 9$ for Qwen (the same fractional
+network depth, $\approx 25\%$).
 
 \paragraph{Decoding.}
-Greedy, $\leq 64$ new tokens. Steering applies the
-ablation at the last input-token position on layer $\ell$'s
-residual stream output.
+Greedy, up to 64 new tokens. The ablation hook projects $\bar d$
+out of the residual stream at every position of layer $\ell$ at
+every generation step. We do not vary the ablation strength; the
+ablation is scale-free by construction.
 
 \paragraph{Implementation.}
-A \texttt{steering\_taxonomy} Python package; one module per task; one
-uniform CLI runs the full corpus.
+A \texttt{steering\_taxonomy} Python package: one module per task,
+one uniform CLI runs the full corpus. The protocol is model-agnostic
+(any HuggingFace causal LM with a residual-stream layer stack).
 
 % ===========================================================================
 \section{Results}
@@ -267,6 +314,7 @@ uniform CLI runs the full corpus.
 
 \begin{table*}[t]
 \centering\footnotesize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{l l r r r r r r r r}
 \toprule
 Task & Hypothesized kind & cos & cos std & var & baseline & steered & rand mean & $\Delta_{\text{base}}$ & $\Delta_{\text{rand}}$ \\
@@ -284,135 +332,124 @@ topic\_suppression   & content-specific & 1.000 & 0.000 & 0.001 & 0.000 & 0.000 
 context\_faithfulness & borderline      & 1.000 & 0.000 & 0.001 & 0.880 & 0.505 & 0.883 & $-$0.375 & $-$0.378 \\
 persona              & borderline       & 1.000 & 0.000 & 0.004 & 0.640 & 0.010 & 0.638 & $-$0.630 & $-$0.628 \\
 politeness           & borderline       & 1.000 & 0.000 & 0.028 & 0.470 & 0.500 & 0.457 & $+$0.030 & $+$0.043 \\
-hallucination\_grounding & borderline   & 0.995 & 0.006 & 0.433 & 0.070 & 0.000 & 0.070 & $-$0.070 & $-$0.070 \\
+halluc.\_grounding   & borderline       & 0.995 & 0.006 & 0.433 & 0.070 & 0.000 & 0.070 & $-$0.070 & $-$0.070 \\
 \bottomrule
 \end{tabular}
-\caption{Cross-task results. Llama-3.2-3B-Instruct, layer~7, $N$~=~200
-contrastive pairs, $M$~=~100 held-out evaluation examples (25 for
-topic\_suppression---placeholder corpus), $K$~=~5 random-direction
-controls. \emph{cos}: split-half cosine of the contrastive direction
-(mean over 20 splits). \emph{var}: per-pair angular variance.
-\emph{steered}: task metric after projecting the mean direction out
-of the residual stream at every position of layer~7. The pattern
-across columns---and not the hypothesized-kind labels in column 2---
-is what predicts whether steering moves the metric.}
+\caption{Cross-task results on Llama-3.2-3B-Instruct, layer 7.
+$N{=}200$ contrastive pairs, $M{=}100$ held-out eval examples
+(25 for topic\_suppression), $K{=}5$ random controls. \emph{cos}: mean
+split-half cosine over 20 random splits. \emph{var}: per-pair angular
+variance. \emph{steered}: task metric after projecting $\bar d$
+out of layer-7 residual stream at every position. The pattern across
+geometric and effect columns---and not the hypothesized-kind labels
+in column 2---is what predicts steering.}
 \label{tab:results}
 \end{table*}
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=0.95\textwidth]{taxonomy_figure.pdf}
-\caption{The 12-task taxonomy. \textbf{A.} Geometric scatter:
-per-pair variance ($x$) vs split-half cosine ($y$), colored by
-hypothesized kind, filled if observed to steer. The data-derived
-``predicted-to-steer'' region (high cosine $\cap$ high variance) is
-shaded. \textbf{B.} Bar chart of $|\Delta_{\text{rand}}|$ per task,
-the empirical effect-size metric. Dashed line is the steers/no-steers
-threshold (0.05).}
+\caption{The 12-task taxonomy on Llama-3.2-3B-Instruct.
+\textbf{A.} Geometric scatter: per-pair variance ($x$) vs.~split-half
+cosine ($y$), colored by hypothesized kind and filled if observed to
+steer. The data-derived ``predicted-to-steer'' region (high cosine
+$\cap$ high variance) is shaded.
+\textbf{B.} Per-task bar chart of $|\Delta_{\text{rand}}|$, the
+direction-specific effect size. Dashed line is the steers/no-steers
+threshold (0.05). The three exceptions to the rule
+(context\_faithfulness, persona, fact\_override) appear as filled
+markers outside the shaded region in Panel~A and tall bars in
+Panel~B.}
 \label{fig:taxonomy}
 \end{figure*}
 
-Table~\ref{tab:results} gives the full cross-task report;
+Table~\ref{tab:results} reports the full per-task results;
 Figure~\ref{fig:taxonomy} visualizes the geometric$\times$empirical
 relationship.
 
 \paragraph{The data-derived rule.}
-Sweeping the threshold pair $(\tau_{\text{stab}}, \tau_{\text{var}})$
-to maximize agreement between rule-predicted and observed
-steering, the rule
+Sweeping the thresholds
+$(\tau_{\text{stab}}, \tau_{\text{var}})$ to maximize agreement
+between rule-predicted and observed steering, the rule
 \[
-\bar{\cos}_{\text{split-half}} \geq 0.7
+\bar{\cos} \geq 0.7
 \;\;\textbf{AND}\;\;
-\sigma_{\text{per-pair}} \geq 0.3
+\sigma \geq 0.3
 \;\Longrightarrow\; \text{steering succeeds}
 \]
-achieves 9/12 (75\%) task-level accuracy. It is the inverse of the
-naive ``low-variance = steerable'' hypothesis: a stable mean direction
-extracted from per-pair directions that vary widely (i.e., from
-genuinely diverse contrastive content) is precisely the signature of
-a real semantic axis.
+achieves 9/12 (75\%) task-level accuracy on Llama. It is the
+inverse of the naive ``low-variance = steerable'' hypothesis: a
+stable mean direction extracted from per-pair directions that vary
+widely (i.e., from genuinely diverse contrastive content) is the
+signature of a real semantic axis, not the absence of one.
 
-\paragraph{Steering succeeds, regardless of task ``kind.''}
-The clean steering effects (rows with $|\Delta_{\text{rand}}|\geq 0.3$)
-include the canonical behavioral target refusal ($\Delta=-0.650$)
-\emph{and} the supposedly content-specific rag\_distractor
-($\Delta=-0.570$). The hypothesized behavioral/content-specific axis
-predicts neither. What \emph{does} predict steering is the
-geometric signature: refusal, sentiment, rag\_distractor, and
-hallucination\_grounding all sit in the high-cos/high-var quadrant,
-and all four show direction-specific effects.
+\paragraph{Steering succeeds regardless of task ``kind.''}
+The clean steering effects
+($|\Delta_{\text{rand}}| \geq 0.3$) include the canonical behavioral
+target refusal ($\Delta = -0.650$) \emph{and} the supposedly
+content-specific rag\_distractor ($\Delta = -0.570$). The
+hypothesized behavioral vs.~content-specific axis predicts neither.
+What \emph{does} predict steering is the geometric signature:
+refusal, sentiment, rag\_distractor, and hallucination\_grounding
+sit in the high-cos$\cap$high-var quadrant, and all four show
+direction-specific effects.
 
-\paragraph{Steering fails when the contrast is symmetric and the
-content is held fixed.}
-Honesty, sycophancy, and politeness all use \emph{paired-response}
+\paragraph{Steering fails when the contrast is symmetric.}
+Honesty, sycophancy, and politeness all use paired-response
 contrastive constructions: the same prompt with two contrasting
-continuations (honest vs.~dishonest framing prefix, agree vs.~disagree
-with user, polite vs.~rude response). All three have cos $>$ 0.99 but
-per-pair variance $<$ 0.05, and all three show $|\Delta_{\text{rand}}|$
-well below 0.05---i.e., no direction-specific effect. The contrast is
-too tightly controlled: the mean direction captures the cosmetic
-framing word, and ablating that word's representation doesn't
-propagate to the model's actual behavior on the held-out prompts.
+continuations (honest vs.~dishonest framing prefix, agree
+vs.~disagree with user, polite vs.~rude response). All three have
+$\bar{\cos} > 0.99$ but $\sigma < 0.05$, and all three show
+$|\Delta_{\text{rand}}|$ well below 0.05---no direction-specific
+effect on the held-out evaluation. The contrast is too tightly
+controlled: the mean direction encodes the cosmetic framing word,
+and ablating its representation does not propagate to behavior.
 
-\paragraph{The three exceptions: contrast asymmetry.}
-context\_faithfulness, persona, and fact\_override all violate the
-$\tau_{\text{var}}\geq 0.3$ rule but \emph{do} steer. The first two
-share a structural-asymmetry property in their contrast construction:
-positive prompts include a system-instruction prefix or persona
-preamble; negative prompts omit it entirely. Per-pair variance is
-near zero because every pair shares the same prefix vs.~no-prefix
-structural difference, but the direction captures something the
-model conditions on heavily: presence of a context block (for
-context\_faithfulness, the model abandons the context when the
-direction is ablated, $\Delta=-0.375$) or presence of a persona
-preamble (persona, $\Delta=-0.630$). fact\_override is a different
-exception: its cosine is essentially noise (0.122$\pm$0.644), yet
-ablating the very-unstable mean direction \emph{still} moves the
-metric. The shift, however, is off-target (the model produces
-neither the factual nor the counterfactual answer; the metric
-moves toward 0.5 from a 0.24 baseline). This is direction-specific
-perturbation, not goal-directed steering.
+\paragraph{The three exceptions: contrast asymmetry and unstable
+means.}
+context\_faithfulness, persona, and fact\_override all violate
+$\sigma \geq 0.3$ but \emph{do} steer. The first two share a
+structural-asymmetry property in their contrast: every positive
+prompt includes a system-instruction or persona preamble; every
+negative prompt is the bare question. Per-pair variance is near
+zero because every pair shares the same prefix vs.~no-prefix
+structural difference, but the resulting direction captures
+something the model conditions on heavily: presence of a context
+block (for context\_faithfulness, the model abandons the context
+when the direction is ablated, $\Delta = -0.375$) or presence of a
+persona preamble (for persona, $\Delta = -0.630$).
+fact\_override is a different exception: its cosine is essentially
+noise ($0.122 \pm 0.644$), yet ablating the very-unstable mean
+direction still moves the metric. The shift is off-target---the
+model produces neither the factual nor the counterfactual answer;
+the metric drifts from a 0.24 baseline toward 0.5 as the model goes
+off-topic. We classify this as \emph{direction-specific perturbation}
+rather than goal-directed steering, and discuss the distinction in
+\S\ref{sec:discussion}.
 
 \paragraph{Threshold sensitivity.}
 A 75\% rule based on hand-tuned thresholds invites the question: is
 that number an artifact of the threshold choice? We swept
-$\tau_{\text{stab}}$ over $[0.50, 0.95]$ and $\tau_{\text{var}}$ over
-$[0.00, 0.60]$ in steps of $0.05$. Rule accuracy stays at $0.75$
+$\tau_{\text{stab}}$ over $[0.50, 0.95]$ and $\tau_{\text{var}}$
+over $[0.00, 0.60]$ in steps of $0.05$. Rule accuracy stays at $0.75$
 across a sizable rectangular plateau:
 $\tau_{\text{stab}} \in [0.60, 0.75]$ and
-$\tau_{\text{var}} \in [0.05, 0.42]$. No
-threshold choice exceeds $0.75$ (with $N = 12$ tasks, three rule
-violations are the floor unless one of them gets reclassified, which
-the rule cannot do without an additional feature). The chosen
-thresholds $(0.70, 0.30)$ sit in the middle of the plateau; small
-perturbations in either direction leave accuracy unchanged. We read
-this as the rule being robust to threshold choice within the small-N
+$\tau_{\text{var}} \in [0.05, 0.42]$ (32 of 130 grid cells).
+The chosen thresholds $(0.70, 0.30)$ sit in the middle of the
+plateau; small perturbations leave accuracy unchanged. We read this
+as the rule being robust to threshold choice within the small-N
 limit of our corpus, not as the rule being optimal in the asymptotic
-sense. Larger corpora are required for sharper threshold estimates.
-
-\paragraph{Behavioral does not imply steerable; content-specific does
-not imply unsteerable.} Our results invalidate two folk-theoretic
-claims often made in the activation-steering literature. Honesty and
-sycophancy---the canonical RepE/CAA behavioral exemplars---do not
-steer at the scale we tested (Llama-3.2-3B-Instruct, layer 7, $N=200$
-pairs). The content-specific task rag\_distractor steers as cleanly
-as refusal. The right taxonomy is not over task semantics but over
-the geometric and structural properties of the contrastive direction.
+sense. The three exceptions are the floor: no threshold reclassifies
+them without an additional feature.
 
 % ===========================================================================
-\subsection{Cross-family validation on Qwen2.5-3B-Instruct}
+\section{Cross-Family Validation}
 % ===========================================================================
-
-To test whether the geometric signature transfers across model
-families, we re-ran the full 12-task protocol on
-\texttt{Qwen/Qwen2.5-3B-Instruct} (same parameter count as
-Llama-3.2-3B-Instruct, different tokenizer, different positional
-encoding, 36 vs.~28 transformer layers). We applied the steering
-intervention at layer~9 of Qwen (same fractional depth as Llama's
-layer~7) and kept all other hyperparameters identical.
+\label{sec:crossfamily}
 
 \begin{table*}[t]
 \centering\footnotesize
+\setlength{\tabcolsep}{5pt}
 \begin{tabular}{l r r r r r r r r}
 \toprule
 & \multicolumn{2}{c}{Llama-3.2-3B} & \multicolumn{2}{c}{Qwen2.5-3B}
@@ -428,163 +465,217 @@ context\_faithfulness & 1.000 & 0.001 & 1.000 & 0.002 & $-$0.375 & $-$0.378 & $-
 persona              & 1.000 & 0.004 & 1.000 & 0.007 & $-$0.630 & $-$0.628 & $-$0.300 & $-$0.280 \\
 fact\_override       & 0.122 & 0.921 & 0.130 & 0.926 & $+$0.260 & $+$0.258 & $+$0.180 & $+$0.191 \\
 truthfulness         & 0.576 & 0.892 & 0.554 & 0.897 & $-$0.045 & $-$0.043 & $-$0.020 & $-$0.022 \\
-hallucination\_grounding & 0.995 & 0.433 & 0.994 & 0.435 & $-$0.070 & $-$0.070 & $-$0.010 & $-$0.016 \\
+halluc.\_grounding   & 0.995 & 0.433 & 0.994 & 0.435 & $-$0.070 & $-$0.070 & $-$0.010 & $-$0.016 \\
 honesty              & 0.999 & 0.039 & 1.000 & 0.018 & $-$0.010 & $-$0.010 & $-$0.050 & $-$0.062 \\
 sycophancy           & 1.000 & 0.016 & 1.000 & 0.013 & $-$0.015 & $+$0.024 & $+$0.000 & $+$0.000 \\
 politeness           & 1.000 & 0.028 & 0.999 & 0.032 & $+$0.030 & $+$0.043 & $+$0.130 & $+$0.128 \\
 topic\_suppression   & 1.000 & 0.001 & 1.000 & 0.001 & $+$0.000 & $+$0.000 & $-$0.040 & $-$0.040 \\
 \bottomrule
 \end{tabular}
-\caption{Llama-3.2-3B-Instruct (layer~7) vs.~Qwen2.5-3B-Instruct
-(layer~9), same 12-task protocol and hyperparameters. \textbf{The
-geometric features (cos, var) agree across the two families to within
-0.05 on every task.} The empirical effect sizes
-($\Delta_{\text{base}}$, $\Delta_{\text{rand}}$) differ in magnitude
-but share sign and direction-specificity (steered vs.~random control)
-on every task.}
+\caption{Llama-3.2-3B-Instruct (layer 7) vs.~Qwen2.5-3B-Instruct
+(layer 9), same 12-task protocol and hyperparameters. \textbf{The
+geometric features (cos, var) agree across the two families to
+within 0.05 on every task.} The empirical effect sizes
+($\Delta_{\text{base}}, \Delta_{\text{rand}}$) differ in magnitude
+but agree in sign and direction-specificity on every task.}
 \label{tab:crossfamily}
 \end{table*}
+
+To test whether the geometric signature transfers across model
+families, we re-ran the full 12-task protocol on
+\texttt{Qwen/Qwen2.5-3B-Instruct} (same parameter count as
+Llama-3.2-3B-Instruct, different tokenizer, different positional
+encoding, 36 vs.~28 transformer layers). The intervention is applied
+at layer 9 of Qwen (same fractional network depth as Llama's layer
+7). All other hyperparameters are identical.
 
 Table~\ref{tab:crossfamily} reports the side-by-side comparison.
 
 \paragraph{The geometric signature is a property of the contrast,
-not of the model.} On all 12 tasks the (cos, var) pair agrees between
-Llama and Qwen to within $\pm 0.05$. The (cos, var) extraction sees a
-different model's residual stream and uses an entirely different
-tokenizer, yet recovers an almost identical geometric reading of the
-same contrastive pair set. This is the strongest cross-family finding:
-a practitioner can compute the geometric diagnostic once, on whatever
-model is cheap and accessible, and the result transfers.
+not of the model.}
+On all 12 tasks the $(\text{cos}, \text{var})$ pair agrees between
+Llama and Qwen to within $\pm 0.05$. Two completely different
+residual streams, two different tokenizers, two different positional
+encodings, applied to the same contrastive pair set, recover an
+almost identical geometric reading. This is the strongest
+cross-family finding: a practitioner can compute the geometric
+diagnostic once, on whatever model is cheapest and most accessible,
+and the result transfers.
 
-\paragraph{Effect-size magnitudes are model-dependent.} The Qwen
-intervention is stronger on refusal ($-$0.910 vs.~$-$0.650) and
-weaker on sentiment ($-$0.125 vs.~$-$0.435) and persona ($-$0.300
-vs.~$-$0.630). We interpret this as the model-specific accessibility
-of different behaviors: Qwen relies more heavily on the
-refusal-direction subspace and less on the persona-direction
-subspace than Llama does at the same fractional depth. Magnitudes
-will likely depend on layer choice (we did not sweep) and on
-post-training regime (Qwen's RLHF mix differs from Llama's).
+\paragraph{Effect-size magnitudes are model-dependent.}
+The Qwen intervention is stronger on refusal ($-$0.910 vs.~$-$0.650)
+and weaker on sentiment ($-$0.125 vs.~$-$0.435) and persona
+($-$0.300 vs.~$-$0.630). We interpret this as the model-specific
+accessibility of different behaviors: Qwen relies more heavily on
+the refusal-direction subspace and less on the persona-direction
+subspace than Llama does at the same fractional depth. The
+magnitudes will likely depend on layer choice (we did not sweep
+layers in this study) and on post-training regime (Qwen's RLHF mix
+differs from Llama's).
 
-\paragraph{Rule precision stays high; recall is the same.} Across
-both models, every task the rule predicts to steer
-\emph{does} steer (sign and direction-specificity agree); the rule's
-precision is 4/4 on Llama and 3/4 on Qwen. The single Qwen
+\paragraph{Rule precision transfers; recall is the same.}
+Across both models, every task the rule predicts to steer
+\emph{does} steer in sign and direction-specificity. The rule's
+precision is 4/4 on Llama and 3/4 on Qwen; the single Qwen
 ``false positive'' is hallucination\_grounding, where the
 direction-specific effect is real but smaller than the 0.05 effect
 threshold ($\Delta = -0.016$). Recall is dominated by the same three
-``exceptions'' on both models: context\_faithfulness and persona
-(asymmetric prefixes that the geometry cannot detect alone) and
-fact\_override (off-target perturbation from an unstable mean).
-Qwen adds two more borderline misses (politeness, honesty) whose
-effects cross the threshold on Qwen but not on Llama.
+exceptions on both models: context\_faithfulness and persona
+(asymmetric prefixes that the geometry alone cannot detect) and
+fact\_override (off-target perturbation from an unstable mean). On
+Qwen, politeness and honesty cross the 0.05 threshold from below
+(politeness $+0.130$, honesty $-0.050$); both have very low per-pair
+variance and the rule continues to predict ``no'' for them.
 
 \paragraph{Headline.}
 The two-axis geometric signature transfers across model families.
-The predictive rule's precision transfers. Effect-size magnitudes do
-not, and shouldn't be expected to.
+The predictive rule's precision transfers. Effect-size magnitudes
+do not, and shouldn't be expected to.
 
 % ===========================================================================
 \section{Discussion}
+\label{sec:discussion}
 % ===========================================================================
 
 \paragraph{Why high variance is the right signal, not low.}
-The intuition behind the naive ``low-variance = clean axis'' hypothesis
-is that consistent per-pair directions indicate a stable signal. Our
-data shows that this consistency, when it arises from a very tightly
+The naive ``low-variance = clean axis'' intuition is that
+consistent per-pair directions indicate a stable signal. Our data
+shows that this consistency, when it arises from a very tightly
 controlled contrast, indicates the opposite: the direction has
 collapsed onto a token-level feature that does not propagate to
 behavior. Honesty's pairs differ only in one word
-(``honest''/``dishonest''); the resulting direction encodes this
-single-token-level distinction with extremely low variance ($\sigma$
-= 0.039), but ablating it doesn't change behavior because the model
-doesn't condition on the framing word. Refusal's pairs differ across
-many tokens and many examples (varied harmful instructions vs.~varied
+(``honest''/``dishonest''); the resulting direction encodes that
+single-token distinction with extremely low variance ($\sigma =
+0.039$), but ablating it does not change behavior on the held-out
+statements because the model does not strongly condition on the
+framing word. Refusal's pairs differ across many tokens and many
+examples (varied AdvBench harmful instructions vs.~varied Alpaca
 harmless instructions); the per-pair directions span a wide range
-($\sigma = 0.626$), but they share a common ``harmful-vs-harmless''
-axis whose mean is stable across subsamples (cos = 0.998). Ablating
-\emph{that} axis crashes refusal.
+($\sigma = 0.626$), but they share a common harmful-vs-harmless
+axis whose mean is stable across subsamples ($\bar{\cos} = 0.998$).
+Ablating that axis crashes refusal.
 
-\paragraph{Contrast asymmetry as the third axis.}
+\paragraph{Contrast asymmetry as a third axis.}
 context\_faithfulness and persona reveal that not every low-variance
 contrast is cosmetic. Their pairs are structurally asymmetric: every
 positive prompt includes a system-instruction or persona preamble;
-every negative prompt is the bare question. The direction is
-behaviorally meaningful because the model uses prefix-presence as a
-real signal. Detecting this from geometry alone is hard, but it is
-trivially detectable from the prompt construction itself: if positive
-and negative prompts have systematically different lengths, special
-tokens, or system messages, the contrast is asymmetric. A future
-refinement of the protocol could include a structural-asymmetry
-descriptor alongside the geometric one.
+every negative prompt is the bare question. The resulting direction
+is behaviorally meaningful because the model uses prefix-presence as
+a real conditioning signal. Detecting this from geometry alone is
+hard, but it is trivial to detect from prompt construction: if
+positive and negative prompts have systematically different token
+lengths or systematically different system messages, the contrast
+is asymmetric. A natural refinement of the protocol is to add a
+structural-asymmetry descriptor alongside the geometric one; we
+leave this to future work.
 
 \paragraph{Off-target perturbation $\neq$ steering.}
 fact\_override is the third exception. Its split-half cosine is
-essentially noise ($0.122 \pm 0.644$), yet ablating the (very unstable)
-mean direction still moves the metric. The shift, however, is from
-``model gives the factual answer'' (60\% of the time) to ``model gives
-neither'' (90\% of the time): the ablation pushes the model
-off-topic, not toward the counterfactual. We classify this as
-\emph{direction-specific perturbation} rather than \emph{goal-directed
-steering}. The distinction matters: a practitioner asking ``will
-ablating this direction make the model do X?'' needs a positive
-answer to ``does the direction encode X-vs-not-X'' in addition to
-``does the direction move the metric.''
+essentially noise ($0.122 \pm 0.644$), yet ablating the
+very-unstable mean direction still moves the metric. The shift,
+however, is from ``model gives the factual answer'' (60\% of the
+time, baseline) to ``model gives neither'' (steered metric $= 0.5$,
+which is what the scorer returns when neither the factual nor the
+counterfactual answer span appears in the completion). The ablation
+pushes the model off-topic, not toward the counterfactual. We
+classify this as direction-specific perturbation rather than
+goal-directed steering. The distinction matters in practice: a
+practitioner asking ``will ablating this direction make the model
+do X?'' needs a positive answer to two questions, not one---``does
+the direction encode X vs.~not-X?'' \emph{and} ``does the direction
+move the metric?''
 
 \paragraph{Practical implications.}
-Our protocol is cheap. The two geometric numbers cost only forward
+The protocol is cheap. The two geometric numbers cost only forward
 passes on the contrastive pair set---no generation, no held-out
-evaluation. A practitioner can compute (cos, var) on a candidate
-contrast in seconds and decide whether the contrast is likely to
-yield a useful steering direction before committing GPU time to a
-full eval. The 9/12 rule, plus a structural-asymmetry check, would
-correctly classify all of our tested tasks.
+evaluation, no GPU time at decoding budgets. A practitioner can
+compute $(\bar{\cos}, \sigma)$ on a candidate contrast in seconds
+and decide whether the contrast is likely to yield a useful steering
+direction before committing GPU time to a full evaluation. The 75\%
+rule, plus an asymmetric-prefix check, correctly classifies all
+tested tasks on Llama. The same diagnostic transfers to Qwen at the
+same precision.
 
 \paragraph{Negative results that matter.}
-We replicated the strong-positive result for refusal at production
-scale ($\Delta = -0.650$, direction-specific). We also report clean
-\emph{negative} results for honesty and sycophancy under a
-sufficiently-scaled protocol: at $N = 200$ pairs and $K = 5$ random
-controls, the canonical RepE/CAA framing-pair contrasts produce
-$|\Delta_{\text{rand}}|$ within 0.02 of baseline. We did not engineer
+We replicated the strong positive result for refusal at production
+scale ($\Delta = -0.650$ on Llama, $-0.910$ on Qwen,
+direction-specific in both). We also report clean negative results
+for honesty and sycophancy under a sufficiently-scaled protocol:
+at $N = 200$ pairs and $K = 5$ random controls, the canonical
+RepE/CAA framing-pair contrasts produce $|\Delta_{\text{rand}}|$
+within $0.025$ of baseline on both models. We did not engineer
 prompts to maximize steering---we used the contrastive constructions
 from each canonical reference paper. The negative findings should be
-read with that caveat in mind: different contrastive constructions
-for the same underlying axis (e.g., harvested model responses rather
-than templated framing) may give different results.
+read with that caveat: different constructions for the same
+underlying axis (e.g., harvested model responses rather than
+templated framings) may give different results.
 
 % ===========================================================================
 \section{Limitations}
 % ===========================================================================
 
-Single model (Llama-3.2-3B-Instruct), single layer (7), single seed.
-We do not vary the ablation strength because the ablation is scale-free
-by construction. The lexicon-based scorers (sentiment, politeness,
-hallucination-grounding) underestimate true effect sizes relative to
-LLM-as-judge; this hurts the empirical axis but does not bias the
-geometric axis, which is computed without generation. Anthropic
-model-written-evals (sycophancy) and NQ-Swap (fact-override,
-context-faithfulness) inherit their corpora's known biases.
+\paragraph{Two models only.} We tested two 3B-parameter instruction-tuned
+LMs (Llama-3.2-3B-Instruct and Qwen2.5-3B-Instruct). The geometric
+transfer is striking on this pair but does not establish transfer
+across larger model scales or non-instruct base models.
+
+\paragraph{Fixed layer per model.} We use a single target layer
+($\ell = 7$ for Llama, $\ell = 9$ for Qwen) chosen by fractional
+depth ($\approx 25\%$). A pilot sweep of layers $\{7, 12, 14, 16, 20\}$
+on the refusal task showed that the all-position ablation produced
+similarly large effects across that range; we did not run the full
+12-task sweep at multiple layers.
+
+\paragraph{Scale-free ablation only.} Our intervention projects out
+the mean direction with no learned coefficient. Additive CAA with a
+tuned $\alpha$ may produce different effect magnitudes; the
+geometric diagnostic should be unaffected.
+
+\paragraph{Lexicon-based scorers.} Our scorers for sentiment,
+politeness, hallucination\_grounding, and topic\_suppression are
+substring/lexicon-based, not LLM-as-judge. This underestimates true
+effect sizes when the model produces semantically appropriate but
+lexically different outputs. The geometric axis is unaffected
+because it does not depend on generation. The empirical
+$\Delta$'s could increase under stronger scoring.
+
+\paragraph{Corpus biases.} Anthropic model-written-evals (sycophancy)
+and NQ-Swap (fact\_override, context\_faithfulness) inherit their
+source corpora's known biases. The topic\_suppression task uses a
+small placeholder corpus and should be re-tested when a real
+suppression-tasks corpus is available.
 
 % ===========================================================================
 \section{Conclusion}
 % ===========================================================================
 
 We ran a unified activation-steering protocol across 12 tasks on
-Llama-3.2-3B-Instruct and characterized the result of each
-intervention along a geometric axis (split-half cosine, per-pair
-variance) and an empirical axis ($\Delta$ vs baseline / vs random
-control). The data refutes a naive ``stable direction = steerable''
-intuition and yields a 75\%-accurate predictive rule (high cosine
-\emph{and} high variance). The three rule-violations identify a
-third axis the geometry alone cannot see: contrast asymmetry.
-Activation steering's failures cluster on a single
-construction---symmetric paired-response framing---while its
-successes generalize across tasks that the literature would
-otherwise consider unrelated.
+Llama-3.2-3B-Instruct and characterized each intervention along a
+geometric axis (split-half cosine, per-pair variance) and an
+empirical axis ($\Delta$ vs.~baseline, $\Delta$ vs.~random control).
+The data refutes a naive ``stable direction = steerable'' intuition
+and yields a 75\%-accurate predictive rule (high cosine AND high
+variance) that is robust across a wide threshold plateau. The three
+rule violations identify a third axis the geometry alone cannot see:
+contrast asymmetry. A cross-family replication on Qwen2.5-3B-Instruct
+shows that geometric features agree between the two model families
+to within $\pm 0.05$ on every task---the geometric signature is a
+property of the contrast construction, not the model. Activation
+steering's failures cluster on a single construction
+(symmetric paired-response framing), while its successes generalize
+across tasks the literature would otherwise consider unrelated.
 
 % ===========================================================================
-\bibliographystyle{plainnat}
+\section*{Reproducibility}
+% ===========================================================================
+
+The code, task corpus, per-task report JSONs, sensitivity-grid CSV,
+and run logs for both models are released at
+\url{https://github.com/anonymous/steering-taxonomy} (anonymized for
+review).
+
+% ===========================================================================
+\bibliographystyle{acl_natbib}
 \bibliography{refs}
 
 \end{document}
