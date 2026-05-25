@@ -1,0 +1,18 @@
+{
+  "task_name": "topic_suppression",
+  "task_kind": "content_specific",
+  "n_pairs": 75,
+  "n_eval": 25,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.9999947875738144,
+  "split_half_cos_std": 1.9941718016713464e-06,
+  "per_pair_variance": 9.78708267211914e-05,
+  "baseline_metric": 0.84,
+  "steered_metric": 0.0,
+  "random_metric_mean": 0.8400000000000001,
+  "random_metric_std": 1.1102230246251565e-16,
+  "delta_vs_baseline": -0.84,
+  "delta_vs_random": -0.8400000000000001,
+  "seconds": 754.6839799880981,
+  "notes": ""
+}

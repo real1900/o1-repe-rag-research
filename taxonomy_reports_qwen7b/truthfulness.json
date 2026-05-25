@@ -1,0 +1,18 @@
+{
+  "task_name": "truthfulness",
+  "task_kind": "behavioral",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.5904531590640545,
+  "split_half_cos_std": 0.6495113761375614,
+  "per_pair_variance": 0.9274158105254173,
+  "baseline_metric": 0.535,
+  "steered_metric": 0.5,
+  "random_metric_mean": 0.531,
+  "random_metric_std": 0.0037416573867739447,
+  "delta_vs_baseline": -0.03500000000000003,
+  "delta_vs_random": -0.031000000000000028,
+  "seconds": 2869.8940098285675,
+  "notes": ""
+}

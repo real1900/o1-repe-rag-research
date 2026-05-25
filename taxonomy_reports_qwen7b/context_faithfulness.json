@@ -1,0 +1,18 @@
+{
+  "task_name": "context_faithfulness",
+  "task_kind": "borderline",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.9999980419874192,
+  "split_half_cos_std": 4.5208266518104386e-07,
+  "per_pair_variance": 0.00011092424392700195,
+  "baseline_metric": 0.9,
+  "steered_metric": 0.78,
+  "random_metric_mean": 0.901,
+  "random_metric_std": 0.00489897948556636,
+  "delta_vs_baseline": -0.12,
+  "delta_vs_random": -0.121,
+  "seconds": 3648.890000104904,
+  "notes": ""
+}

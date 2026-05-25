@@ -1,0 +1,18 @@
+{
+  "task_name": "fact_override",
+  "task_kind": "content_specific",
+  "n_pairs": 200,
+  "n_eval": 100,
+  "target_layer": 7,
+  "split_half_cos_mean": 0.13614390827715397,
+  "split_half_cos_std": 0.8544290079856581,
+  "per_pair_variance": 0.9463987648487091,
+  "baseline_metric": 0.315,
+  "steered_metric": 0.47,
+  "random_metric_mean": 0.32700000000000007,
+  "random_metric_std": 0.008124038404635967,
+  "delta_vs_baseline": 0.15499999999999997,
+  "delta_vs_random": 0.1429999999999999,
+  "seconds": 2895.129213809967,
+  "notes": ""
+}
