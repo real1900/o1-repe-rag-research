@@ -687,11 +687,25 @@ straddling the $\tau_{\text{stab}} = 0.7$ threshold;
 for truthfulness $[0.55, 0.80]$;
 for hallucination\_grounding $[0.97, 1.00]$.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.95\textwidth]{layer_sweep_heatmap.pdf}
+\caption{Layer sweep on Llama-3.2-3B-Instruct: per-task per-layer
+$(\bar{\cos}, \sigma)$. Rows are tasks (grouped by hypothesized
+kind, separated by white lines); columns are layers $0$\textendash$27$.
+Red dashed line: main-paper layer choice ($\ell=7$). Both panels show
+that the geometric features are largely layer-stable: the row
+patterns---and therefore the rule's classification---do not change
+qualitatively between $\ell=7$ and other mid-network layers.}
+\label{fig:layersweep}
+\end{figure*}
+
 \paragraph{Practical takeaway.}
 The predictive rule's classification is layer-stable for the majority
 of corpus tasks and matches the main-result classification at the
-mid-network layer we use. The layer choice does not appear to drive
-the rule's success in our experiments.
+mid-network layer we use (see Figure~\ref{fig:layersweep}).
+The layer choice does not appear to drive the rule's success in our
+experiments.
 
 \subsection{R3: Generalization to additive CAA}
 \label{sec:additive}
