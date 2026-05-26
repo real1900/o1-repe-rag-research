@@ -557,182 +557,44 @@ The two-axis geometric signature transfers; the predictive rule's
 precision transfers; effect magnitudes vary by model.
 
 % ===========================================================================
-\section{Robustness Experiments}
+\section{Robustness}
 \label{sec:robustness}
 % ===========================================================================
 
-The cross-family validation establishes that the geometric signature
-generalizes across model architecture. We now ask three further
-robustness questions: \textbf{(R1)} does the rule generalize across
-\emph{scale} within a model family? \textbf{(R2)} does it depend on
-the choice of layer? \textbf{(R3)} does it generalize from scale-free
-ablation to additive CAA?
+We ran three further robustness checks; full results are in the
+appendices.
 
-\subsection{R1: Scale generalization (1B and 7B variants)}
-\label{sec:scale}
+\paragraph{(R1) Scale.}
+Replicating the protocol on Llama-3.2-1B and Qwen2.5-7B
+(App.~\ref{app:scale}), the $(\bar{\cos}, \sigma)$ agreement with
+Llama-3B holds at $r(\bar{\cos}) \geq +0.998$ and
+$r(\sigma) \geq +0.999$ for every one of the six pairwise
+comparisons across the four models. Effect magnitudes vary,
+modulated by each model's underlying capability for the targeted
+behavior: Llama-1B's near-zero baselines yield null effects on
+tasks where the larger models steer, and Qwen-7B's strong default
+disposition lets the asymmetric topic\_suppression contrast move it
+sharply ($\Delta = -0.84$). The geometric signature is a property
+of the contrast; whether the model encodes the corresponding
+behavior strongly enough for ablation to move it is a property of
+the model.
 
-We replicate the protocol on two additional model scales, one per
-family: \texttt{meta-llama/Llama-3.2-1B-Instruct} (16 layers,
-hidden 2048; intervention at layer 4) and
-\texttt{Qwen/Qwen2.5-7B-Instruct} (28 layers, hidden 3584;
-intervention at layer 7). Both choices preserve the $\approx 25\%$
-fractional-depth heuristic. Together with Llama-3.2-3B and
-Qwen2.5-3B, this gives a $2 \times$\{1B, 3B, 7B\} layout over the
-two model families.
+\paragraph{(R2) Layer.}
+A 28-layer sweep on Llama-3B (App.~\ref{app:layer},
+Figure~\ref{fig:layersweep}) classifies 8/12 tasks identically at
+every layer; the remaining four agree with the main result at the
+mid-network choice $\ell=7$. The layer choice does not drive the
+rule's success.
 
-\paragraph{Geometric features replicate across scale and family.}
-Anchored on Llama-3B, the $(\bar{\cos}, \sigma)$ agreement with each
-of the other three models is striking. All Pearson correlations
-across the 12-task corpus are $r(\bar{\cos}) \geq +0.998$ and
-$r(\sigma) \geq +0.999$ for every pair of models, including
-Qwen-7B which differs from Llama-3B in family, scale, tokenizer,
-and positional encoding simultaneously. Pairwise $\pm 0.05$
-agreement: Llama-3B vs Qwen-3B 12/12 on cos and 12/12 on var;
-vs Llama-1B 11/12 and 12/12 (one outlier is fact\_override whose
-cosine is essentially noise in every model); vs Qwen-7B 12/12 and
-11/12. The geometric signature is robust across both family and
-scale---consistent with the contrast being the dominant determinant
-of the features rather than the model's size or architecture family.
-
-\paragraph{Effect-size rankings are preserved across scale, but
-magnitudes vary.}
-Each of the rule-predicted-to-steer tasks (refusal, sentiment,
-rag\_distractor) steers across all 4 models when the model has a
-non-degenerate baseline. The three exceptions (context\_faithfulness,
-persona, fact\_override) replicate as exceptions on all 4 models
-with the same sign. Pairwise Pearson correlations of
-$|\Delta_{\text{rand}}|$ across the 12-task set are: Llama-3B vs
-Qwen-3B $r = +0.77$, vs Llama-1B $r = +0.77$, vs Qwen-7B $r = +0.40$;
-Qwen-3B vs Qwen-7B $r = +0.64$. The Qwen-7B correlations are pulled
-down by one outlier: topic\_suppression, where Qwen-7B has
-$\Delta_{\text{rand}} = -0.84$ while the other 3 models register
-near zero (see capability-ceiling discussion below). Excluding
-that single task, $r$ with Qwen-7B rises to comparable values.
-
-\paragraph{Capability ceiling cuts both ways.}
-Several tasks confirm a \emph{capability ceiling}: the geometric
-signature is identical across models, but the empirical effect
-depends on whether the model has the underlying capability or
-disposition for the steering to act on.
-\textbf{Downward:} Llama-1B's rule precision is 2/4 (refusal and
-sentiment steer as predicted; rag\_distractor and
-hallucination\_grounding are predicted to steer by geometry but
-show null effects). The two false positives are tasks where
-Llama-1B has near-zero baseline (rag\_distractor baseline = 0.05,
-hallucination\_grounding = 0.01), so the smaller model lacks the
-capability the steering could push on.
-\textbf{Upward:} Qwen-7B's topic\_suppression shows $\Delta = -0.84$
-despite var $\approx 0$ (a rule miss) because Qwen-7B has a
-\emph{strong} default disposition to refuse-to-discuss on our
-placeholder topics (baseline 0.84), and the structurally asymmetric
-contrast (refuse vs.~discuss continuation) targets exactly that
-disposition. In both directions, the geometric signature recovers
-the same direction across models; what changes is whether the
-model encodes the corresponding behavior strongly enough for
-ablation to move it. A practitioner should pair the geometric
-rule with a quick baseline check on the held-out set.
-
-\subsection{R2: Layer stability of the rule}
-\label{sec:layer}
-
-We profile per-layer $(\bar{\cos}, \sigma)$ for every (task, layer)
-pair on Llama-3B---all 28 layers, all 12 tasks, $N=200$ pairs per
-task---using only forward passes (no generation cost). For each task
-we measure the layer-to-layer range of cos and var; the relevant
-quantity is whether the rule's classification of the task stays
-constant across layers.
-
-\paragraph{Eight of twelve tasks are rule-stable at every layer.}
-Honesty, sycophancy, sentiment, refusal, topic\_suppression,
-context\_faithfulness, persona, and politeness all classify the same
-way at every single one of the 28 layers
-(honesty / sycophancy / topic\_suppression / context\_faithfulness /
-persona / politeness are always low-var-collapsed;
-refusal is always live; sentiment is always live).
-
-\paragraph{Four tasks show layer-dependent classification at extreme
-layers but agree at the mid-network choice $\ell{=}7$.}
-fact\_override has $\bar{\cos} \in [0.02, 0.69]$ -- the mean direction
-is unstable at every layer (rule classifies as ``unstable mean''
-throughout, matching the main result).
-truthfulness, rag\_distractor, and hallucination\_grounding show
-some cosine variation across layers, but the rule classification
-is preserved at the mid-network layer choice we use in the main
-results. The cosine range for rag\_distractor is $[0.69, 1.00]$,
-straddling the $\tau_{\text{stab}} = 0.7$ threshold;
-for truthfulness $[0.55, 0.80]$;
-for hallucination\_grounding $[0.97, 1.00]$.
-
-A heatmap of the full per-(task, layer) $(\bar{\cos}, \sigma)$ table
-is in Appendix~\ref{app:layer-heatmap} (Figure~\ref{fig:layersweep}).
-The predictive rule's classification matches the main-result
-classification at the mid-network layer we use; the layer choice does
-not drive the rule's success in our experiments.
-
-\subsection{R3: Generalization to additive CAA}
-\label{sec:additive}
-
-The main protocol uses scale-free ablation. To test that the
-predictive structure generalizes to additive CAA~\citep{rimsky2023steering},
-we re-run the 4 representative tasks (refusal, rag\_distractor,
-honesty, context\_faithfulness) on Llama-3B at layer 7 under
-$h \leftarrow h + \alpha \bar d$ at every position, for
-$\alpha \in \{0.5, 1.0, 2.0, 4.0\}$. We use $N=200$ pairs and
-$M=50$ held-out examples per task (smaller than the main protocol
-to keep wall-clock manageable across 6 conditions per task).
-
-\begin{table}[t]
-\centering\footnotesize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{l r r r r r r r}
-\toprule
-& base & ablate & $\Delta$abl & $\alpha{=}.5$ & $\alpha{=}1$ & $\alpha{=}2$ & $\alpha{=}4$ \\
-\midrule
-refusal              & 0.58 & 0.00 & $-$0.58 & 0.62 & 0.64 & 0.60 & 0.52 \\
-honesty              & 0.44 & 0.42 & $-$0.02 & 0.44 & 0.50 & 0.54 & \textbf{0.62} \\
-rag\_distractor      & 0.56 & 0.00 & $-$0.56 & 0.58 & 0.56 & 0.48 & 0.50 \\
-context\_faithfulness & 0.88 & 0.51 & $-$0.37 & 0.90 & 0.90 & 0.81 & 0.74 \\
-\bottomrule
-\end{tabular}
-\caption{Ablation vs.~additive CAA at layer 7 on Llama-3B,
-four representative tasks. Baseline (no intervention), scale-free
-ablation, and additive $h \leftarrow h + \alpha \bar d$ at four
-$\alpha$ values. Bold: cases where additive CAA produces an effect
-that ablation does not.}
-\label{tab:additive}
-\end{table}
-
-Table~\ref{tab:additive} reports the results. Three observations.
-
-\paragraph{Sign and magnitude of ablation transfer to additive CAA
-on rule-predicted tasks.}
-Both refusal and rag\_distractor steer hard under ablation
-($-$0.58 and $-$0.56). Under additive CAA they show non-monotonic
-patterns: a small enhancement at low $\alpha$, then degradation back
-toward baseline (and beyond it) at high $\alpha$. context\_faithfulness
-behaves similarly: ablation $-$0.37; additive at $\alpha=4$
-gives $-$0.14. In all three rule-predicted cases, both interventions
-push the metric in the same direction; the magnitudes differ.
-
-\paragraph{Additive CAA can succeed where ablation fails (honesty).}
-Honesty's ablation effect is essentially null ($-$0.02), matching
-the main result. But \emph{additive CAA at $\alpha=4$ pushes the
-metric from $0.44$ to $0.62$} (a $+0.18$ direction-specific increase
-in truthful answers, since the contrast is honest-vs-dishonest
-framing). The mean direction is real and behaviorally meaningful,
-but the model's natural behavior already lies orthogonal to it
-(removing it changes nothing), so only adding back along the
-direction produces an effect.
-
-\paragraph{Implication for the rule.}
-Our scale-free-ablation rule has high precision (every task it
-predicts to steer does steer under ablation) but may have a recall
-gap on low-variance contrasts that respond to additive but not
-ablative intervention. Honesty's behavior here suggests the rule
-could be sharpened by adding a second predictive condition for
-additive-CAA effects. We leave this to future work, noting that the
-rule's primary claim---predicting when scale-free ablation will move
-the metric---is unaffected.
+\paragraph{(R3) Additive CAA.}
+Re-running four representative tasks under
+$h \leftarrow h + \alpha \bar d$ (App.~\ref{app:additive},
+Table~\ref{tab:additive}), ablation and additive CAA agree in sign
+on every rule-predicted task. Honesty, which the rule predicts
+\emph{not} to steer under ablation (and does not), shows a
+$+0.18$ direction-specific increase under additive CAA at $\alpha=4$.
+The rule's recall gap on low-variance contrasts is real, and a
+second predictive condition for additive-CAA effects could close it.
 
 % ===========================================================================
 \section{Discussion}
@@ -812,11 +674,12 @@ across this set but does not yet establish transfer to substantially
 larger scales (70B+) or to non-instruct base models.
 
 \paragraph{Intervention scope.} We use scale-free ablation at a
-single mid-network target layer per model. R3 (additive CAA) and R2
-(layer sweep) probe these axes; full-corpus sweeps over $(\ell, \alpha)$
-are left to future work. Different contrastive constructions for the
-same axis (e.g., harvested model responses rather than templated
-framings) may give different magnitudes.
+single mid-network target layer per model. App.~\ref{app:layer}
+(layer sweep) and App.~\ref{app:additive} (additive CAA) probe these
+axes; full-corpus sweeps over $(\ell, \alpha)$ are left to future
+work. Different contrastive constructions for the same axis (e.g.,
+harvested model responses rather than templated framings) may give
+different magnitudes.
 
 \paragraph{Scoring.} Our scorers for sentiment, politeness,
 hallucination\_grounding, and topic\_suppression are
@@ -869,8 +732,101 @@ review).
 % ===========================================================================
 \appendix
 % ===========================================================================
-\section{Layer-sweep heatmap}
-\label{app:layer-heatmap}
+\section{Scale generalization (R1)}
+\label{app:scale}
+
+We replicate the protocol on two additional model scales, one per
+family: \texttt{meta-llama/Llama-3.2-1B-Instruct} (16 layers,
+hidden 2048; intervention at layer 4) and
+\texttt{Qwen/Qwen2.5-7B-Instruct} (28 layers, hidden 3584;
+intervention at layer 7). Both choices preserve the $\approx 25\%$
+fractional-depth heuristic. Together with Llama-3.2-3B and
+Qwen2.5-3B, this gives a $2 \times$\{1B, 3B, 7B\} layout over the
+two model families.
+
+\paragraph{Geometric features replicate across scale and family.}
+Anchored on Llama-3B, the $(\bar{\cos}, \sigma)$ agreement with each
+of the other three models is striking. All Pearson correlations
+across the 12-task corpus are $r(\bar{\cos}) \geq +0.998$ and
+$r(\sigma) \geq +0.999$ for every pair of models, including
+Qwen-7B which differs from Llama-3B in family, scale, tokenizer,
+and positional encoding simultaneously. Pairwise $\pm 0.05$
+agreement: Llama-3B vs Qwen-3B 12/12 on cos and 12/12 on var;
+vs Llama-1B 11/12 and 12/12 (one outlier is fact\_override whose
+cosine is essentially noise in every model); vs Qwen-7B 12/12 and
+11/12. The geometric signature is robust across both family and
+scale---consistent with the contrast being the dominant determinant
+of the features rather than the model's size or architecture family.
+
+\paragraph{Effect-size rankings are preserved across scale, but
+magnitudes vary.}
+Each of the rule-predicted-to-steer tasks (refusal, sentiment,
+rag\_distractor) steers across all 4 models when the model has a
+non-degenerate baseline. The three exceptions (context\_faithfulness,
+persona, fact\_override) replicate as exceptions on all 4 models
+with the same sign. Pairwise Pearson correlations of
+$|\Delta_{\text{rand}}|$ across the 12-task set are: Llama-3B vs
+Qwen-3B $r = +0.77$, vs Llama-1B $r = +0.77$, vs Qwen-7B $r = +0.40$;
+Qwen-3B vs Qwen-7B $r = +0.64$. The Qwen-7B correlations are pulled
+down by one outlier: topic\_suppression, where Qwen-7B has
+$\Delta_{\text{rand}} = -0.84$ while the other 3 models register
+near zero (see capability-ceiling discussion below). Excluding
+that single task, $r$ with Qwen-7B rises to comparable values.
+
+\paragraph{Capability ceiling cuts both ways.}
+Several tasks confirm a \emph{capability ceiling}: the geometric
+signature is identical across models, but the empirical effect
+depends on whether the model has the underlying capability or
+disposition for the steering to act on.
+\textbf{Downward:} Llama-1B's rule precision is 2/4 (refusal and
+sentiment steer as predicted; rag\_distractor and
+hallucination\_grounding are predicted to steer by geometry but
+show null effects). The two false positives are tasks where
+Llama-1B has near-zero baseline (rag\_distractor baseline = 0.05,
+hallucination\_grounding = 0.01), so the smaller model lacks the
+capability the steering could push on.
+\textbf{Upward:} Qwen-7B's topic\_suppression shows $\Delta = -0.84$
+despite var $\approx 0$ (a rule miss) because Qwen-7B has a
+\emph{strong} default disposition to refuse-to-discuss on our
+placeholder topics (baseline 0.84), and the structurally asymmetric
+contrast (refuse vs.~discuss continuation) targets exactly that
+disposition. In both directions, the geometric signature recovers
+the same direction across models; what changes is whether the
+model encodes the corresponding behavior strongly enough for
+ablation to move it. A practitioner should pair the geometric
+rule with a quick baseline check on the held-out set.
+
+% ===========================================================================
+\section{Layer stability of the rule (R2)}
+\label{app:layer}
+
+We profile per-layer $(\bar{\cos}, \sigma)$ for every (task, layer)
+pair on Llama-3B---all 28 layers, all 12 tasks, $N=200$ pairs per
+task---using only forward passes (no generation cost). For each task
+we measure the layer-to-layer range of cos and var; the relevant
+quantity is whether the rule's classification of the task stays
+constant across layers.
+
+\paragraph{Eight of twelve tasks are rule-stable at every layer.}
+Honesty, sycophancy, sentiment, refusal, topic\_suppression,
+context\_faithfulness, persona, and politeness all classify the same
+way at every single one of the 28 layers
+(honesty / sycophancy / topic\_suppression / context\_faithfulness /
+persona / politeness are always low-var-collapsed;
+refusal is always live; sentiment is always live).
+
+\paragraph{Four tasks show layer-dependent classification at extreme
+layers but agree at the mid-network choice $\ell{=}7$.}
+fact\_override has $\bar{\cos} \in [0.02, 0.69]$ -- the mean direction
+is unstable at every layer (rule classifies as ``unstable mean''
+throughout, matching the main result).
+truthfulness, rag\_distractor, and hallucination\_grounding show
+some cosine variation across layers, but the rule classification
+is preserved at the mid-network layer choice we use in the main
+results. The cosine range for rag\_distractor is $[0.69, 1.00]$,
+straddling the $\tau_{\text{stab}} = 0.7$ threshold;
+for truthfulness $[0.55, 0.80]$;
+for hallucination\_grounding $[0.97, 1.00]$.
 
 \begin{figure*}[h]
 \centering
@@ -883,5 +839,69 @@ do not change qualitatively between $\ell=7$ and other mid-network
 layers, supporting the layer-stability claim of R2.}
 \label{fig:layersweep}
 \end{figure*}
+
+% ===========================================================================
+\section{Additive CAA (R3)}
+\label{app:additive}
+
+The main protocol uses scale-free ablation. To test that the
+predictive structure generalizes to additive CAA~\citep{rimsky2023steering},
+we re-run the 4 representative tasks (refusal, rag\_distractor,
+honesty, context\_faithfulness) on Llama-3B at layer 7 under
+$h \leftarrow h + \alpha \bar d$ at every position, for
+$\alpha \in \{0.5, 1.0, 2.0, 4.0\}$. We use $N=200$ pairs and
+$M=50$ held-out examples per task (smaller than the main protocol
+to keep wall-clock manageable across 6 conditions per task).
+
+\begin{table}[h]
+\centering\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l r r r r r r r}
+\toprule
+& base & ablate & $\Delta$abl & $\alpha{=}.5$ & $\alpha{=}1$ & $\alpha{=}2$ & $\alpha{=}4$ \\
+\midrule
+refusal              & 0.58 & 0.00 & $-$0.58 & 0.62 & 0.64 & 0.60 & 0.52 \\
+honesty              & 0.44 & 0.42 & $-$0.02 & 0.44 & 0.50 & 0.54 & \textbf{0.62} \\
+rag\_distractor      & 0.56 & 0.00 & $-$0.56 & 0.58 & 0.56 & 0.48 & 0.50 \\
+context\_faithfulness & 0.88 & 0.51 & $-$0.37 & 0.90 & 0.90 & 0.81 & 0.74 \\
+\bottomrule
+\end{tabular}
+\caption{Ablation vs.~additive CAA at layer 7 on Llama-3B,
+four representative tasks. Baseline (no intervention), scale-free
+ablation, and additive $h \leftarrow h + \alpha \bar d$ at four
+$\alpha$ values. Bold: cases where additive CAA produces an effect
+that ablation does not.}
+\label{tab:additive}
+\end{table}
+
+\paragraph{Sign and magnitude of ablation transfer to additive CAA
+on rule-predicted tasks.}
+Both refusal and rag\_distractor steer hard under ablation
+($-$0.58 and $-$0.56). Under additive CAA they show non-monotonic
+patterns: a small enhancement at low $\alpha$, then degradation back
+toward baseline (and beyond it) at high $\alpha$. context\_faithfulness
+behaves similarly: ablation $-$0.37; additive at $\alpha=4$
+gives $-$0.14. In all three rule-predicted cases, both interventions
+push the metric in the same direction; the magnitudes differ.
+
+\paragraph{Additive CAA can succeed where ablation fails (honesty).}
+Honesty's ablation effect is essentially null ($-$0.02), matching
+the main result. But \emph{additive CAA at $\alpha=4$ pushes the
+metric from $0.44$ to $0.62$} (a $+0.18$ direction-specific increase
+in truthful answers, since the contrast is honest-vs-dishonest
+framing). The mean direction is real and behaviorally meaningful,
+but the model's natural behavior already lies orthogonal to it
+(removing it changes nothing), so only adding back along the
+direction produces an effect.
+
+\paragraph{Implication for the rule.}
+Our scale-free-ablation rule has high precision (every task it
+predicts to steer does steer under ablation) but may have a recall
+gap on low-variance contrasts that respond to additive but not
+ablative intervention. Honesty's behavior here suggests the rule
+could be sharpened by adding a second predictive condition for
+additive-CAA effects. We leave this to future work, noting that the
+rule's primary claim---predicting when scale-free ablation will move
+the metric---is unaffected.
 
 \end{document}
