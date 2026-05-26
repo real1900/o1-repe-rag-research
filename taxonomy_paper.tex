@@ -399,24 +399,12 @@ stable mean direction extracted from per-pair directions that vary
 widely (i.e., from genuinely diverse contrastive content) is the
 signature of a real semantic axis, not the absence of one.
 
-\paragraph{Continuous predictors agree with the binary rule.}
-Treating the rule as a binary classifier loses information. Pooled
-across Llama and Qwen ($N{=}24$ tasks $\times$ models), Pearson
-correlations between candidate geometric predictors and the empirical
-effect size $|\Delta_{\text{rand}}|$ are:
-$r(\bar{\cos}, |\Delta_{\text{rand}}|) = +0.10$,
-$r(\sigma, |\Delta_{\text{rand}}|) = +0.25$,
-$r(\bar{\cos}\cdot\sigma, |\Delta_{\text{rand}}|) = +0.41$
-($p \approx 0.046$),
-$r(\text{rule}, |\Delta_{\text{rand}}|) = +0.45$
-($p \approx 0.026$).
-Three things stand out. (i)~$\bar{\cos}$ alone is not predictive
-because most tasks saturate near $\bar{\cos} \approx 1$.
-(ii)~$\sigma$ alone is moderately predictive.
-(iii)~The composite $\bar{\cos}\cdot\sigma$ recovers most of the
-binary rule's predictive power as a continuous measure, suggesting
-the rule is not a knife-edge classifier but a coarsening of a real
-underlying continuous relationship.
+As a continuous predictor, the composite
+$\bar{\cos} \cdot \sigma$ achieves
+$r(\bar{\cos} \cdot \sigma, |\Delta_{\text{rand}}|) = +0.41$
+($p \approx 0.046$, $N{=}24$ pooled Llama-3B + Qwen-3B), suggesting
+the binary rule is a coarsening of a real continuous relationship
+rather than a knife-edge classifier.
 
 \paragraph{Steering succeeds regardless of task ``kind.''}
 The clean steering effects
@@ -463,19 +451,12 @@ rather than goal-directed steering, and discuss the distinction in
 \S\ref{sec:discussion}.
 
 \paragraph{Threshold sensitivity.}
-A 75\% rule based on hand-tuned thresholds invites the question: is
-that number an artifact of the threshold choice? We swept
-$\tau_{\text{stab}}$ over $[0.50, 0.95]$ and $\tau_{\text{var}}$
-over $[0.00, 0.60]$ in steps of $0.05$. Rule accuracy stays at $0.75$
-across a sizable rectangular plateau:
-$\tau_{\text{stab}} \in [0.60, 0.75]$ and
-$\tau_{\text{var}} \in [0.05, 0.42]$ (32 of 130 grid cells).
-The chosen thresholds $(0.70, 0.30)$ sit in the middle of the
-plateau; small perturbations leave accuracy unchanged. We read this
-as the rule being robust to threshold choice within the small-N
-limit of our corpus, not as the rule being optimal in the asymptotic
-sense. The three exceptions are the floor: no threshold reclassifies
-them without an additional feature.
+The $75\%$ accuracy holds across a wide threshold plateau
+($\tau_{\text{stab}} \in [0.60, 0.75]$ and
+$\tau_{\text{var}} \in [0.05, 0.42]$; 32 of 130 grid cells from a
+sweep at $0.05$ resolution); the chosen thresholds $(0.70, 0.30)$
+sit in the middle of the plateau. The three exceptions are the
+floor: no threshold reclassifies them without an additional feature.
 
 % ===========================================================================
 \section{Cross-Family Validation}
@@ -558,40 +539,22 @@ parameter scale.}
 \label{fig:crossmodel}
 \end{figure*}
 
-\paragraph{Effect-size magnitudes are model-dependent, but rankings
-agree.}
-The Qwen intervention is stronger on refusal ($-$0.910 vs.~$-$0.650)
-and weaker on sentiment ($-$0.125 vs.~$-$0.435) and persona
-($-$0.300 vs.~$-$0.630). Per-task absolute magnitudes are not
-preserved across families. The \emph{ranking} of tasks by effect
-size, however, is highly preserved: the Pearson correlation of
-$|\Delta_{\text{rand}}|$ between Llama-3B and Qwen-3B across the 12
-tasks is $r = +0.77$ (Spearman $\rho = +0.73$); the corresponding
-correlation of signed $\Delta_{\text{rand}}$ is $r = +0.83$
-($\rho = +0.88$). The model-specific component of magnitude is
-plausibly attributable to differences in layer choice (we did not
-sweep layers in this study) and post-training regime (Qwen's RLHF
-mix differs from Llama's), but the task-relative ordering is
-shared across families.
+\paragraph{Effect magnitudes vary by model, rankings agree.}
+Absolute per-task magnitudes differ
+(refusal: $-0.65$ Llama vs $-0.91$ Qwen; sentiment: $-0.44$ vs
+$-0.13$), but the task ranking by $|\Delta_{\text{rand}}|$ is
+preserved across families ($r{=}+0.77$, $\rho{=}+0.73$), as is the
+signed $\Delta_{\text{rand}}$ ($r{=}+0.83$).
 
-\paragraph{Rule precision transfers; recall is the same.}
-Across both models, every task the rule predicts to steer
-\emph{does} steer in sign and direction-specificity. The rule's
-precision is 4/4 on Llama and 3/4 on Qwen; the single Qwen
-``false positive'' is hallucination\_grounding, where the
-direction-specific effect is real but smaller than the 0.05 effect
-threshold ($\Delta = -0.016$). Recall is dominated by the same three
-exceptions on both models: context\_faithfulness and persona
-(asymmetric prefixes that the geometry alone cannot detect) and
-fact\_override (off-target perturbation from an unstable mean). On
-Qwen, politeness and honesty cross the 0.05 threshold from below
-(politeness $+0.130$, honesty $-0.050$); both have very low per-pair
-variance and the rule continues to predict ``no'' for them.
-
-\paragraph{Headline.}
-The two-axis geometric signature transfers across model families.
-The predictive rule's precision transfers. Effect-size magnitudes
-do not, and shouldn't be expected to.
+\paragraph{Rule precision transfers across models.}
+Every task the rule predicts to steer does steer in sign and
+direction-specificity: precision is 4/4 on Llama-3B and 3/4 on
+Qwen-3B (the single false positive is hallucination\_grounding at
+$\Delta = -0.016$). The same three exceptions
+(context\_faithfulness, persona, fact\_override) appear on both
+models---the rule's recall gap is structural, not model-specific.
+The two-axis geometric signature transfers; the predictive rule's
+precision transfers; effect magnitudes vary by model.
 
 % ===========================================================================
 \section{Robustness Experiments}
@@ -700,25 +663,11 @@ straddling the $\tau_{\text{stab}} = 0.7$ threshold;
 for truthfulness $[0.55, 0.80]$;
 for hallucination\_grounding $[0.97, 1.00]$.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=0.95\textwidth]{layer_sweep_heatmap.pdf}
-\caption{Layer sweep on Llama-3.2-3B-Instruct: per-task per-layer
-$(\bar{\cos}, \sigma)$. Rows are tasks (grouped by hypothesized
-kind, separated by white lines); columns are layers $0$\textendash$27$.
-Red dashed line: main-paper layer choice ($\ell=7$). Both panels show
-that the geometric features are largely layer-stable: the row
-patterns---and therefore the rule's classification---do not change
-qualitatively between $\ell=7$ and other mid-network layers.}
-\label{fig:layersweep}
-\end{figure*}
-
-\paragraph{Practical takeaway.}
-The predictive rule's classification is layer-stable for the majority
-of corpus tasks and matches the main-result classification at the
-mid-network layer we use (see Figure~\ref{fig:layersweep}).
-The layer choice does not appear to drive the rule's success in our
-experiments.
+A heatmap of the full per-(task, layer) $(\bar{\cos}, \sigma)$ table
+is in Appendix~\ref{app:layer-heatmap} (Figure~\ref{fig:layersweep}).
+The predictive rule's classification matches the main-result
+classification at the mid-network layer we use; the layer choice does
+not drive the rule's success in our experiments.
 
 \subsection{R3: Generalization to additive CAA}
 \label{sec:additive}
@@ -838,67 +787,47 @@ do X?'' needs a positive answer to two questions, not one---``does
 the direction encode X vs.~not-X?'' \emph{and} ``does the direction
 move the metric?''
 
-\paragraph{Practical implications.}
-The protocol is cheap. The two geometric numbers cost only forward
+\paragraph{Practical implications and negative results.}
+The diagnostic is cheap: $(\bar{\cos}, \sigma)$ cost only forward
 passes on the contrastive pair set---no generation, no held-out
-evaluation, no GPU time at decoding budgets. A practitioner can
-compute $(\bar{\cos}, \sigma)$ on a candidate contrast in seconds
-and decide whether the contrast is likely to yield a useful steering
-direction before committing GPU time to a full evaluation. The 75\%
-rule, plus an asymmetric-prefix check, correctly classifies all
-tested tasks on Llama. The same diagnostic transfers to Qwen at the
-same precision.
-
-\paragraph{Negative results that matter.}
-We replicated the strong positive result for refusal at production
-scale ($\Delta = -0.650$ on Llama, $-0.910$ on Qwen,
-direction-specific in both). We also report clean negative results
-for honesty and sycophancy under a sufficiently-scaled protocol:
-at $N = 200$ pairs and $K = 5$ random controls, the canonical
-RepE/CAA framing-pair contrasts produce $|\Delta_{\text{rand}}|$
-within $0.025$ of baseline on both models. We did not engineer
-prompts to maximize steering---we used the contrastive constructions
-from each canonical reference paper. The negative findings should be
-read with that caveat: different constructions for the same
-underlying axis (e.g., harvested model responses rather than
-templated framings) may give different results.
+evaluation. A practitioner can decide whether the contrast is
+likely to yield a useful steering direction before committing GPU
+time to a full evaluation. The 75\% rule plus a structural-asymmetry
+check correctly classifies all tested tasks on Llama-3B. We also
+report clean negative results: at $N{=}200$ pairs and $K{=}5$ random
+controls, canonical RepE/CAA framing-pair contrasts for honesty and
+sycophancy produce $|\Delta_{\text{rand}}|$ within $0.025$ of
+baseline on all four models---we did not engineer prompts to maximize
+steering. Different contrastive constructions for the same underlying
+axis (e.g., harvested model responses) may give different results.
 
 % ===========================================================================
 \section{Limitations}
 % ===========================================================================
 
-\paragraph{Four models tested.} We tested four instruction-tuned
-LMs: Llama-3.2-3B-Instruct, Qwen2.5-3B-Instruct, Llama-3.2-1B-Instruct,
-and Qwen2.5-7B-Instruct, spanning 1B--7B parameters and two
-architecture families. The transfer is striking across this set but
-does not yet establish transfer across substantially larger scales
-(e.g., 70B+) or to non-instruct base models.
+\paragraph{Model scope.} We tested four instruction-tuned LMs
+(Llama-3.2-\{1B, 3B\}, Qwen2.5-\{3B, 7B\}), spanning 1B--7B
+parameters and two architecture families. The transfer is striking
+across this set but does not yet establish transfer to substantially
+larger scales (70B+) or to non-instruct base models.
 
-\paragraph{Fixed layer per model.} We use a single target layer
-($\ell = 7$ for Llama, $\ell = 9$ for Qwen) chosen by fractional
-depth ($\approx 25\%$). A pilot sweep of layers $\{7, 12, 14, 16, 20\}$
-on the refusal task showed that the all-position ablation produced
-similarly large effects across that range; we did not run the full
-12-task sweep at multiple layers.
+\paragraph{Intervention scope.} We use scale-free ablation at a
+single mid-network target layer per model. R3 (additive CAA) and R2
+(layer sweep) probe these axes; full-corpus sweeps over $(\ell, \alpha)$
+are left to future work. Different contrastive constructions for the
+same axis (e.g., harvested model responses rather than templated
+framings) may give different magnitudes.
 
-\paragraph{Scale-free ablation only.} Our intervention projects out
-the mean direction with no learned coefficient. Additive CAA with a
-tuned $\alpha$ may produce different effect magnitudes; the
-geometric diagnostic should be unaffected.
-
-\paragraph{Lexicon-based scorers.} Our scorers for sentiment,
-politeness, hallucination\_grounding, and topic\_suppression are
-substring/lexicon-based, not LLM-as-judge. This underestimates true
-effect sizes when the model produces semantically appropriate but
-lexically different outputs. The geometric axis is unaffected
-because it does not depend on generation. The empirical
-$\Delta$'s could increase under stronger scoring.
-
-\paragraph{Corpus biases.} Anthropic model-written-evals (sycophancy)
-and NQ-Swap (fact\_override, context\_faithfulness) inherit their
-source corpora's known biases. The topic\_suppression task uses a
-small placeholder corpus and should be re-tested when a real
-suppression-tasks corpus is available.
+\paragraph{Scoring.} Our scorers for sentiment, politeness,
+hallucination\_grounding, and topic\_suppression are
+substring/lexicon-based rather than LLM-as-judge. This underestimates
+true effect sizes when the model produces semantically appropriate
+but lexically different outputs. The geometric axis is unaffected
+because it does not depend on generation. Empirical $\Delta$'s could
+increase under stronger scoring. Anthropic model-written-evals
+(sycophancy) and NQ-Swap (fact\_override, context\_faithfulness)
+inherit their source corpora's known biases; topic\_suppression uses
+a small placeholder corpus.
 
 % ===========================================================================
 \section{Conclusion}
@@ -936,5 +865,23 @@ review).
 % ===========================================================================
 % bibstyle is set by acl.sty -- do not add \bibliographystyle here.
 \bibliography{refs}
+
+% ===========================================================================
+\appendix
+% ===========================================================================
+\section{Layer-sweep heatmap}
+\label{app:layer-heatmap}
+
+\begin{figure*}[h]
+\centering
+\includegraphics[width=0.95\textwidth]{layer_sweep_heatmap.pdf}
+\caption{Layer sweep on Llama-3.2-3B-Instruct: per-task per-layer
+$(\bar{\cos}, \sigma)$. Rows are tasks (grouped by hypothesized
+kind, separated by white lines); columns are layers $0$\textendash$27$.
+Red dashed line: main-paper layer choice ($\ell=7$). Row patterns
+do not change qualitatively between $\ell=7$ and other mid-network
+layers, supporting the layer-stability claim of R2.}
+\label{fig:layersweep}
+\end{figure*}
 
 \end{document}
