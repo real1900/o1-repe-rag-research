@@ -49,9 +49,14 @@ variance $\geq 0.3$ implies steering succeeds}---achieves 9 of 12
 (75\%) task-level accuracy on Llama-3.2-3B-Instruct, and the
 three exceptions identify a third axis the geometry cannot see alone:
 \emph{contrast asymmetry} (presence-vs-absence of a structural prefix
-produces strong steering despite near-zero per-pair variance). We
-replicate the protocol on Qwen2.5-3B-Instruct and find the geometric
-features agree across families to within $\pm 0.05$ on all 12
+produces strong steering despite near-zero per-pair variance). The
+augmented three-axis rule generalizes \emph{out-of-sample}: pooled
+leave-one-task-out across 48 (model, task) pairs from four models
+(Llama-3.2-\{1B, 3B\}, Qwen2.5-\{3B, 7B\}) gives 79.2\% accuracy,
+with cross-model validation (train on three models, test on the
+never-seen fourth) yielding 75--83\% per held-out model and
+near-identical chosen thresholds on every split. Geometric features
+themselves agree across families to within $\pm 0.05$ on all 12
 tasks---the $(\text{cos}, \text{var})$ signature is a property of the
 contrast, not the model. The conventional behavioral
 vs.~content-specific task taxonomy is not predictive in our data:
@@ -115,6 +120,13 @@ steering succeeds) that achieves 9 of 12 (75\%) accuracy on
 Llama-3.2-3B-Instruct with a wide threshold plateau. We characterize
 the three exceptions and identify the additional structural feature
 (contrast asymmetry) needed to classify them.
+\item \textbf{Out-of-sample validation.} Pooled leave-one-task-out
+across 48 (model, task) pairs from Llama-3.2-\{1B, 3B\} and
+Qwen2.5-\{3B, 7B\} gives \textbf{79.2\% accuracy} for the augmented
+three-axis rule; cross-model CV (train on three models, test on the
+fourth) yields 75--83\% on every held-out model with near-identical
+chosen thresholds. The geometry-only rule's LOO drops to 58\%---
+the asymmetry feature is what closes the gap.
 \item A \textbf{cross-family validation} on Qwen2.5-3B-Instruct.
 Geometric features agree across the two model families to within
 $\pm 0.05$ on all 12 tasks; the rule's precision stays at $\geq 3/4$.
@@ -458,6 +470,25 @@ sweep at $0.05$ resolution); the chosen thresholds $(0.70, 0.30)$
 sit in the middle of the plateau. The three exceptions are the
 floor: no threshold reclassifies them without an additional feature.
 
+\paragraph{Out-of-sample validation.}
+To check that the $75\%$ is not in-sample-tuning artifact, we ran
+leave-one-task-out CV: for each held-out task, re-tune
+$(\tau_{\text{stab}}, \tau_{\text{var}})$ on the other 11 and apply
+to the held-out. The geometry-only rule's LOO drops to $7/12 \!=\!
+58.3\%$ on Llama-3B---a real recall gap on the asymmetry
+exceptions. \textbf{The augmented three-axis rule}
+$\big[\bar{\cos} \!\geq\! \tau_{\text{stab}}$ AND
+$\sigma \!\geq\! \tau_{\text{var}}\big]$ OR $\big[$contrast
+asymmetric$\big]$, with the asymmetric set
+$\{\text{context\_faithfulness}, \text{persona}\}$ identified
+\emph{ex ante} from the contrast code, recovers $9/12 = 75\%$ LOO
+on Llama-3B and $\mathbf{38/48 = 79.2\%}$ pooled across all four
+models. \textbf{Cross-model CV} (train on three models, test on the
+fourth) yields $75$--$83\%$ on every held-out model (mean $79.2\%$);
+chosen thresholds are near-identical across all splits
+($\tau_{\text{stab}} \!=\! 0.65$, $\tau_{\text{var}} \!=\!
+0.53$--$0.55$).
+
 % ===========================================================================
 \section{Cross-Family Validation}
 % ===========================================================================
@@ -619,20 +650,6 @@ harmless instructions); the per-pair directions span a wide range
 axis whose mean is stable across subsamples ($\bar{\cos} = 0.998$).
 Ablating that axis crashes refusal.
 
-\paragraph{Contrast asymmetry as a third axis.}
-context\_faithfulness and persona reveal that not every low-variance
-contrast is cosmetic. Their pairs are structurally asymmetric: every
-positive prompt includes a system-instruction or persona preamble;
-every negative prompt is the bare question. The resulting direction
-is behaviorally meaningful because the model uses prefix-presence as
-a real conditioning signal. Detecting this from geometry alone is
-hard, but it is trivial to detect from prompt construction: if
-positive and negative prompts have systematically different token
-lengths or systematically different system messages, the contrast
-is asymmetric. A natural refinement of the protocol is to add a
-structural-asymmetry descriptor alongside the geometric one; we
-leave this to future work.
-
 \paragraph{Off-target perturbation $\neq$ steering.}
 fact\_override is the third exception. Its split-half cosine is
 essentially noise ($0.122 \pm 0.644$), yet ablating the
@@ -667,54 +684,38 @@ axis (e.g., harvested model responses) may give different results.
 \section{Limitations}
 % ===========================================================================
 
-\paragraph{Model scope.} We tested four instruction-tuned LMs
-(Llama-3.2-\{1B, 3B\}, Qwen2.5-\{3B, 7B\}), spanning 1B--7B
-parameters and two architecture families. The transfer is striking
-across this set but does not yet establish transfer to substantially
-larger scales (70B+) or to non-instruct base models.
+\paragraph{Scope.} Four instruction-tuned LMs (1B--7B, two
+families); transfer to $70$B+ or non-instruct bases is untested.
+Scale-free ablation at one mid-network layer per model;
+App.~\ref{app:layer} and App.~\ref{app:additive} probe layer and
+additive-$\alpha$ axes, full $(\ell, \alpha)$ sweeps are future
+work. Contrastive constructions other than templated framings
+(e.g., harvested model responses) may give different magnitudes.
 
-\paragraph{Intervention scope.} We use scale-free ablation at a
-single mid-network target layer per model. App.~\ref{app:layer}
-(layer sweep) and App.~\ref{app:additive} (additive CAA) probe these
-axes; full-corpus sweeps over $(\ell, \alpha)$ are left to future
-work. Different contrastive constructions for the same axis (e.g.,
-harvested model responses rather than templated framings) may give
-different magnitudes.
-
-\paragraph{Scoring.} Our scorers for sentiment, politeness,
-hallucination\_grounding, and topic\_suppression are
-substring/lexicon-based rather than LLM-as-judge. This underestimates
-true effect sizes when the model produces semantically appropriate
-but lexically different outputs. The geometric axis is unaffected
-because it does not depend on generation. Empirical $\Delta$'s could
-increase under stronger scoring. Anthropic model-written-evals
-(sycophancy) and NQ-Swap (fact\_override, context\_faithfulness)
-inherit their source corpora's known biases; topic\_suppression uses
-a small placeholder corpus.
+\paragraph{Scoring.} Sentiment, politeness, hallucination\_grounding,
+and topic\_suppression use substring/lexicon scorers, not
+LLM-as-judge; this underestimates effects under lexically-different
+but semantically-appropriate outputs. The geometric axis is
+unaffected (no generation). MWE (sycophancy) and NQ-Swap
+(fact\_override, context\_faithfulness) inherit source-corpus
+biases; topic\_suppression uses a small placeholder corpus.
 
 % ===========================================================================
 \section{Conclusion}
 % ===========================================================================
 
-We ran a unified activation-steering protocol across 12 tasks on
-Llama-3.2-3B-Instruct and characterized each intervention along a
-geometric axis (split-half cosine, per-pair variance) and an
-empirical axis ($\Delta$ vs.~baseline, $\Delta$ vs.~random control).
-The data refutes a naive ``stable direction = steerable'' intuition
-and yields a 75\%-accurate predictive rule (high cosine AND high
-variance) that is robust across a wide threshold plateau. The three
-rule violations identify a third axis the geometry alone cannot see:
-contrast asymmetry. Replicating across four models spanning 1B--7B
-parameters and two architecture families (Llama-3.2-\{1B, 3B\} and
-Qwen2.5-\{3B, 7B\}), geometric features agree to Pearson
-$r \geq +0.998$ on every model pair---the geometric signature is a
-property of the contrast construction, robust across both family
-and scale. The empirical effect magnitudes vary by model, but the
-sign and rank ordering largely transfer, modulated by each model's
-underlying capability for the targeted behavior. Activation
-steering's failures cluster on a single construction
-(symmetric paired-response framing), while its successes generalize
-across tasks the literature would otherwise consider unrelated.
+We characterize 12 activation-steering interventions along a
+geometric axis $(\bar{\cos}, \sigma)$ and an empirical axis
+($\Delta_{\text{base}}, \Delta_{\text{rand}}$), and derive a
+three-axis rule---high cosine AND high variance, OR structural
+asymmetry---that achieves $79.2\%$ pooled LOO across $N{=}48$
+(model, task) pairs and $75$--$83\%$ cross-model CV per held-out
+model. Across four models spanning 1B--7B and two families, the
+geometric features agree to $r \geq +0.998$ on every model pair:
+the $(\bar{\cos}, \sigma)$ signature is a property of the contrast,
+not the model. Steering's failures cluster on a single construction
+(symmetric paired-response framing); its successes generalize across
+tasks the literature would otherwise consider unrelated.
 
 % ===========================================================================
 \section*{Reproducibility}
