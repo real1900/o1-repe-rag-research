@@ -174,20 +174,21 @@ angular variance to disambiguate stable-but-collapsed contrasts from
 stable-and-content-spanning ones.
 
 \paragraph{Linear representation hypothesis.}
-A growing body of work argues that LLMs encode many high-level
-features as linear directions in their residual
-stream~\citep{mikolov2013linguistic,park2023linear,elhage2022superposition}.
-Activation steering operationalizes that hypothesis: pick a direction
-believed to encode a feature, intervene along it. Our predictive rule
-gives empirical structure to the linear-representation picture:
-\emph{contrastive directions that span diverse content (high $\sigma$)
-yet retain a stable mean (high $\bar{\cos}$) recover the true linear
-concept; tightly controlled contrasts (low $\sigma$) recover a
-token-level subspace that may or may not project onto the
-behavior-relevant feature.} The contrast-asymmetry exceptions are
-consistent with this view: the asymmetric construction injects a
-structural prefix the model conditions on, so even a low-$\sigma$
-direction can hit a real conditioning subspace.
+Under
+LRH~\citep{mikolov2013linguistic,park2023linear,elhage2022superposition},
+each per-pair direction decomposes as
+$d_i = \alpha_i v + \varepsilon_i$ with $v$ the latent target axis
+and $\varepsilon_i$ orthogonal content residual. Two regimes yield
+high split-half cosine: (i) \emph{genuine axis}, $\alpha_i$ roughly
+constant and $\|\varepsilon_i\|$ large, so $\bar{d} \!\to\! v$ and
+$\sigma$ is large; (ii) \emph{collapsed token feature}, every $d_i$
+dominated by a shared surface artifact, $\|\varepsilon_i\| \!\to\!
+0$, $\sigma \!\approx\! 0$. Only (i) yields the diverse-content
+signature the rule predicts as steerable, because the model
+conditions on $v$ but not on the surface artifact. Structural
+asymmetry is a third regime: the model conditions on a prefix
+feature (system or persona), so even $\sigma \!\approx\! 0$
+directions can hit a real conditioning subspace.
 
 % ===========================================================================
 \section{Protocol}
