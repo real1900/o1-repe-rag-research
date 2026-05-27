@@ -1,0 +1,135 @@
+{
+  "task_name": "refusal",
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "layer": 7,
+  "n_pairs": 200,
+  "n_eval": 100,
+  "n_seeds": 3,
+  "seeds": [
+    2026,
+    1729,
+    4096
+  ],
+  "delta_vs_baseline": {
+    "mean": -0.65,
+    "std": 0.0,
+    "values": [
+      -0.65,
+      -0.65,
+      -0.65
+    ]
+  },
+  "delta_vs_random": {
+    "mean": -0.6293333333333333,
+    "std": 0.006429100507328643,
+    "values": [
+      -0.622,
+      -0.634,
+      -0.632
+    ]
+  },
+  "split_half_cos_mean": {
+    "mean": 0.9984219193458557,
+    "std": 0.0,
+    "values": [
+      0.9984219193458557,
+      0.9984219193458557,
+      0.9984219193458557
+    ]
+  },
+  "per_pair_variance": {
+    "mean": 0.6257414221763611,
+    "std": 0.0,
+    "values": [
+      0.6257414221763611,
+      0.6257414221763611,
+      0.6257414221763611
+    ]
+  },
+  "baseline_metric": {
+    "mean": 0.65,
+    "std": 0.0,
+    "values": [
+      0.65,
+      0.65,
+      0.65
+    ]
+  },
+  "steered_metric": {
+    "mean": 0.0,
+    "std": 0.0,
+    "values": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "random_metric_mean": {
+    "mean": 0.6293333333333333,
+    "std": 0.006429100507328643,
+    "values": [
+      0.622,
+      0.634,
+      0.632
+    ]
+  },
+  "per_seed_reports": [
+    {
+      "seed": 2026,
+      "task_name": "refusal",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9984219193458557,
+      "split_half_cos_std": 0.0007991881192837119,
+      "per_pair_variance": 0.6257414221763611,
+      "baseline_metric": 0.65,
+      "steered_metric": 0.0,
+      "random_metric_mean": 0.622,
+      "random_metric_std": 0.011661903789690611,
+      "delta_vs_baseline": -0.65,
+      "delta_vs_random": -0.622,
+      "seconds": 1488.2873771190643,
+      "notes": ""
+    },
+    {
+      "seed": 1729,
+      "task_name": "refusal",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9984219193458557,
+      "split_half_cos_std": 0.0007991881192837119,
+      "per_pair_variance": 0.6257414221763611,
+      "baseline_metric": 0.65,
+      "steered_metric": 0.0,
+      "random_metric_mean": 0.634,
+      "random_metric_std": 0.016248076809271934,
+      "delta_vs_baseline": -0.65,
+      "delta_vs_random": -0.634,
+      "seconds": 1488.0199670791626,
+      "notes": ""
+    },
+    {
+      "seed": 4096,
+      "task_name": "refusal",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9984219193458557,
+      "split_half_cos_std": 0.0007991881192837119,
+      "per_pair_variance": 0.6257414221763611,
+      "baseline_metric": 0.65,
+      "steered_metric": 0.0,
+      "random_metric_mean": 0.632,
+      "random_metric_std": 0.013266499161421611,
+      "delta_vs_baseline": -0.65,
+      "delta_vs_random": -0.632,
+      "seconds": 1481.6670589447021,
+      "notes": ""
+    }
+  ]
+}

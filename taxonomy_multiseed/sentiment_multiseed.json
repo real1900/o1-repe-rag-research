@@ -1,0 +1,135 @@
+{
+  "task_name": "sentiment",
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "layer": 7,
+  "n_pairs": 200,
+  "n_eval": 100,
+  "n_seeds": 3,
+  "seeds": [
+    2026,
+    1729,
+    4096
+  ],
+  "delta_vs_baseline": {
+    "mean": -0.43500000000000005,
+    "std": 0.0,
+    "values": [
+      -0.43500000000000005,
+      -0.43500000000000005,
+      -0.43500000000000005
+    ]
+  },
+  "delta_vs_random": {
+    "mean": -0.44300000000000006,
+    "std": 0.013856406460551031,
+    "values": [
+      -0.4590000000000001,
+      -0.43500000000000005,
+      -0.43500000000000005
+    ]
+  },
+  "split_half_cos_mean": {
+    "mean": 0.7522645346820355,
+    "std": 0.0,
+    "values": [
+      0.7522645346820355,
+      0.7522645346820355,
+      0.7522645346820355
+    ]
+  },
+  "per_pair_variance": {
+    "mean": 0.8231996893882751,
+    "std": 0.0,
+    "values": [
+      0.8231996893882751,
+      0.8231996893882751,
+      0.8231996893882751
+    ]
+  },
+  "baseline_metric": {
+    "mean": 0.56,
+    "std": 0.0,
+    "values": [
+      0.56,
+      0.56,
+      0.56
+    ]
+  },
+  "steered_metric": {
+    "mean": 0.125,
+    "std": 0.0,
+    "values": [
+      0.125,
+      0.125,
+      0.125
+    ]
+  },
+  "random_metric_mean": {
+    "mean": 0.5680000000000001,
+    "std": 0.013856406460551031,
+    "values": [
+      0.5840000000000001,
+      0.56,
+      0.56
+    ]
+  },
+  "per_seed_reports": [
+    {
+      "seed": 2026,
+      "task_name": "sentiment",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.7522645346820355,
+      "split_half_cos_std": 0.2915676481759109,
+      "per_pair_variance": 0.8231996893882751,
+      "baseline_metric": 0.56,
+      "steered_metric": 0.125,
+      "random_metric_mean": 0.5840000000000001,
+      "random_metric_std": 0.047999999999999994,
+      "delta_vs_baseline": -0.43500000000000005,
+      "delta_vs_random": -0.4590000000000001,
+      "seconds": 1687.5132510662079,
+      "notes": ""
+    },
+    {
+      "seed": 1729,
+      "task_name": "sentiment",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.7522645346820355,
+      "split_half_cos_std": 0.2915676481759109,
+      "per_pair_variance": 0.8231996893882751,
+      "baseline_metric": 0.56,
+      "steered_metric": 0.125,
+      "random_metric_mean": 0.56,
+      "random_metric_std": 0.0,
+      "delta_vs_baseline": -0.43500000000000005,
+      "delta_vs_random": -0.43500000000000005,
+      "seconds": 1679.7761781215668,
+      "notes": ""
+    },
+    {
+      "seed": 4096,
+      "task_name": "sentiment",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.7522645346820355,
+      "split_half_cos_std": 0.2915676481759109,
+      "per_pair_variance": 0.8231996893882751,
+      "baseline_metric": 0.56,
+      "steered_metric": 0.125,
+      "random_metric_mean": 0.56,
+      "random_metric_std": 0.0,
+      "delta_vs_baseline": -0.43500000000000005,
+      "delta_vs_random": -0.43500000000000005,
+      "seconds": 1681.0161950588226,
+      "notes": ""
+    }
+  ]
+}

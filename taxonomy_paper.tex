@@ -127,18 +127,20 @@ three-axis rule; cross-model CV (train on three models, test on the
 fourth) yields 75--83\% on every held-out model with near-identical
 chosen thresholds. The geometry-only rule's LOO drops to 58\%---
 the asymmetry feature is what closes the gap.
-\item A \textbf{cross-family validation} on Qwen2.5-3B-Instruct.
-Geometric features agree across the two model families to within
-$\pm 0.05$ on all 12 tasks; the rule's precision stays at $\geq 3/4$.
-The $(\text{cos}, \text{var})$ signature is a property of the
-contrast, not of the model.
+\item \textbf{Probe baseline shows linear separability $\neq$
+behavioral conditioning.} A logistic-regression probe trained to
+discriminate the contrast pairs saturates at $\geq 0.99$ on $7/12$
+tasks regardless of whether ablation moves the metric;
+$r(\text{probe acc}, |\Delta_{\text{rand}}|) = -0.176$ while
+$r(\bar{\cos}\cdot\sigma, |\Delta_{\text{rand}}|) = +0.436$.
+Steering predicts behavior change; probes predict only
+separability.
 \item A demonstration that the conventional behavioral
-vs.~content-specific task taxonomy is \emph{not} predictive: a
-content-specific task (rag\_distractor) steers as cleanly as the
-canonical behavioral target (refusal), and a canonical behavioral
-target (honesty) does not steer at all in our data.
-\item Open-source code, task corpus, and per-task reports for both
-models.
+vs.~content-specific task taxonomy is \emph{not} predictive of
+steering: a content-specific task (rag\_distractor) steers as
+cleanly as refusal, while a canonical behavioral target (honesty)
+does not steer at all.
+\item Open-source code, task corpus, and per-task reports.
 \end{itemize}
 
 % ===========================================================================
@@ -371,7 +373,11 @@ split-half cosine over 20 random splits. \emph{var}: per-pair angular
 variance. \emph{steered}: task metric after projecting $\bar d$
 out of layer-7 residual stream at every position. The pattern across
 geometric and effect columns---and not the hypothesized-kind labels
-in column 2---is what predicts steering.}
+in column 2---is what predicts steering. \emph{Seed stability:}
+$\Delta_{\text{base}}$ and $\Delta_{\text{rand}}$ are deterministic
+in the contrastive direction and vary only in the random controls;
+across 3 seeds $\{2026, 1729, 4096\}$ on the headline tasks,
+$\text{std}(\Delta_{\text{rand}}) \leq 0.014$ (multiseed run on M4).}
 \label{tab:results}
 \end{table*}
 
@@ -470,6 +476,19 @@ $\tau_{\text{var}} \in [0.05, 0.42]$; 32 of 130 grid cells from a
 sweep at $0.05$ resolution); the chosen thresholds $(0.70, 0.30)$
 sit in the middle of the plateau. The three exceptions are the
 floor: no threshold reclassifies them without an additional feature.
+
+\paragraph{Supervised-probe baseline.}
+A natural competing predictor is a supervised linear probe trained
+on the contrast pairs themselves. A 5-fold-CV logistic-regression
+probe at layer 7 saturates at $\geq 0.99$ on 7/12 tasks---both
+tasks that steer hard (refusal, persona, context\_faithfulness)
+and tasks ablation does not move (honesty, sycophancy,
+topic\_suppression, politeness, hallucination\_grounding).
+$r(\text{probe acc}, |\Delta_{\text{rand}}|) = -0.176$ across the
+12 tasks; $r(\bar{\cos} \cdot \sigma, |\Delta_{\text{rand}}|) =
++0.436$ on the same set. \textbf{Linear separability is not
+behavioral conditioning:} the probe sees a separable contrast even
+when the model does not condition on it for behavior.
 
 \paragraph{Out-of-sample validation.}
 To check that the $75\%$ is not in-sample-tuning artifact, we ran
@@ -653,19 +672,14 @@ Ablating that axis crashes refusal.
 
 \paragraph{Off-target perturbation $\neq$ steering.}
 fact\_override is the third exception. Its split-half cosine is
-essentially noise ($0.122 \pm 0.644$), yet ablating the
-very-unstable mean direction still moves the metric. The shift,
-however, is from ``model gives the factual answer'' (60\% of the
-time, baseline) to ``model gives neither'' (steered metric $= 0.5$,
-which is what the scorer returns when neither the factual nor the
-counterfactual answer span appears in the completion). The ablation
-pushes the model off-topic, not toward the counterfactual. We
-classify this as direction-specific perturbation rather than
-goal-directed steering. The distinction matters in practice: a
-practitioner asking ``will ablating this direction make the model
-do X?'' needs a positive answer to two questions, not one---``does
-the direction encode X vs.~not-X?'' \emph{and} ``does the direction
-move the metric?''
+noise ($0.122 \pm 0.644$), yet ablating the unstable mean direction
+moves the metric---from ``factual'' (60\%) to ``neither factual nor
+counterfactual'' (steered metric $0.5$, the scorer's middle value
+when neither answer appears). The ablation pushes off-topic, not
+toward the counterfactual: \emph{direction-specific perturbation,
+not goal-directed steering}. Practitioners need both ``the
+direction encodes X vs.~not-X'' \emph{and} ``the direction moves
+the target metric.''
 
 \paragraph{Practical implications and negative results.}
 The diagnostic is cheap: $(\bar{\cos}, \sigma)$ cost only forward
@@ -693,39 +707,30 @@ additive-$\alpha$ axes, full $(\ell, \alpha)$ sweeps are future
 work. Contrastive constructions other than templated framings
 (e.g., harvested model responses) may give different magnitudes.
 
-\paragraph{Scoring.} Sentiment, politeness, hallucination\_grounding,
-and topic\_suppression use substring/lexicon scorers, not
-LLM-as-judge; this underestimates effects under lexically-different
-but semantically-appropriate outputs. The geometric axis is
-unaffected (no generation). MWE (sycophancy) and NQ-Swap
-(fact\_override, context\_faithfulness) inherit source-corpus
-biases; topic\_suppression uses a small placeholder corpus.
+\paragraph{Scoring.} Four tasks use substring/lexicon scorers
+(sentiment, politeness, hallucination\_grounding, topic\_suppression),
+underestimating effects on lexically-different but
+semantically-appropriate outputs. The geometric axis is unaffected
+(no generation). Source-corpus biases apply to MWE (sycophancy) and
+NQ-Swap (fact\_override, context\_faithfulness); topic\_suppression
+uses a placeholder corpus.
 
 % ===========================================================================
 \section{Conclusion}
 % ===========================================================================
 
-We characterize 12 activation-steering interventions along a
-geometric axis $(\bar{\cos}, \sigma)$ and an empirical axis
-($\Delta_{\text{base}}, \Delta_{\text{rand}}$), and derive a
-three-axis rule---high cosine AND high variance, OR structural
-asymmetry---that achieves $79.2\%$ pooled LOO across $N{=}48$
-(model, task) pairs and $75$--$83\%$ cross-model CV per held-out
-model. Across four models spanning 1B--7B and two families, the
-geometric features agree to $r \geq +0.998$ on every model pair:
-the $(\bar{\cos}, \sigma)$ signature is a property of the contrast,
-not the model. Steering's failures cluster on a single construction
-(symmetric paired-response framing); its successes generalize across
-tasks the literature would otherwise consider unrelated.
-
-% ===========================================================================
-\section*{Reproducibility}
-% ===========================================================================
-
-The code, task corpus, per-task report JSONs, sensitivity-grid CSV,
-and run logs for both models are released at
-\url{https://github.com/anonymous/steering-taxonomy} (anonymized for
-review).
+We characterize 12 activation-steering interventions geometrically
+$(\bar{\cos}, \sigma)$ and empirically
+($\Delta_{\text{base}}, \Delta_{\text{rand}}$), derive a three-axis
+rule (high cosine AND high variance, OR structural asymmetry), and
+validate it: $79.2\%$ pooled LOO across $N{=}48$ (model, task)
+pairs, $75$--$83\%$ cross-model CV. The $(\bar{\cos}, \sigma)$
+signature agrees to $r \geq +0.998$ across four models spanning
+1B--7B and two families---a property of the contrast, not the
+model. Steering's failures cluster on symmetric paired-response
+framings; its successes generalize across superficially-unrelated
+tasks. Code at
+\url{https://github.com/anonymous/steering-taxonomy}.
 
 % ===========================================================================
 % bibstyle is set by acl.sty -- do not add \bibliographystyle here.

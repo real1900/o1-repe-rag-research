@@ -1,0 +1,117 @@
+{
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "layer": 7,
+  "n_pairs_per_task": 200,
+  "per_task": {
+    "refusal": {
+      "task_name": "refusal",
+      "probe_accuracy": 0.9974999999999999,
+      "probe_accuracy_std": 0.004999999999999982,
+      "n_pairs": 200,
+      "cos": 0.9984219193458557,
+      "var": 0.6257414221763611,
+      "delta_vs_random": -0.622
+    },
+    "honesty": {
+      "task_name": "honesty",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 200,
+      "cos": 0.9991922110319138,
+      "var": 0.038551270961761475,
+      "delta_vs_random": -0.010000000000000009
+    },
+    "sycophancy": {
+      "task_name": "sycophancy",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 200,
+      "cos": 0.9997452646493912,
+      "var": 0.01586395502090454,
+      "delta_vs_random": 0.024000000000000077
+    },
+    "sentiment": {
+      "task_name": "sentiment",
+      "probe_accuracy": 0.9075000000000001,
+      "probe_accuracy_std": 0.04650268809434568,
+      "n_pairs": 200,
+      "cos": 0.7522645346820355,
+      "var": 0.8231996893882751,
+      "delta_vs_random": -0.4590000000000001
+    },
+    "truthfulness": {
+      "task_name": "truthfulness",
+      "probe_accuracy": 0.6575,
+      "probe_accuracy_std": 0.04716990566028302,
+      "n_pairs": 200,
+      "cos": 0.5762454364448786,
+      "var": 0.8920629620552063,
+      "delta_vs_random": -0.04300000000000004
+    },
+    "rag_distractor": {
+      "task_name": "rag_distractor",
+      "probe_accuracy": 0.5800000000000001,
+      "probe_accuracy_std": 0.036742346141747685,
+      "n_pairs": 200,
+      "cos": 0.9878029644489288,
+      "var": 0.7465552091598511,
+      "delta_vs_random": -0.5619999999999999
+    },
+    "fact_override": {
+      "task_name": "fact_override",
+      "probe_accuracy": 0.8474999999999999,
+      "probe_accuracy_std": 0.039843443626273053,
+      "n_pairs": 200,
+      "cos": 0.12181813090573997,
+      "var": 0.9212585091590881,
+      "delta_vs_random": 0.258
+    },
+    "topic_suppression": {
+      "task_name": "topic_suppression",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 75,
+      "cos": 0.9999272525310516,
+      "var": 0.0013902783393859863,
+      "delta_vs_random": 0.0
+    },
+    "context_faithfulness": {
+      "task_name": "context_faithfulness",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 200,
+      "cos": 0.999982625246048,
+      "var": 0.0010042786598205566,
+      "delta_vs_random": -0.378
+    },
+    "persona": {
+      "task_name": "persona",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 200,
+      "cos": 0.9999377816915512,
+      "var": 0.0038329362869262695,
+      "delta_vs_random": -0.6280000000000001
+    },
+    "politeness": {
+      "task_name": "politeness",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 200,
+      "cos": 0.9995523035526276,
+      "var": 0.028221845626831055,
+      "delta_vs_random": 0.04299999999999998
+    },
+    "hallucination_grounding": {
+      "task_name": "hallucination_grounding",
+      "probe_accuracy": 1.0,
+      "probe_accuracy_std": 0.0,
+      "n_pairs": 200,
+      "cos": 0.9950940728187561,
+      "var": 0.4332873821258545,
+      "delta_vs_random": -0.07
+    }
+  },
+  "correlation_probe_vs_delta_rand": -0.17564957189207175,
+  "correlation_cos_x_var_vs_delta_rand": 0.4363815620059024
+}

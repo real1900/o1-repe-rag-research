@@ -52,12 +52,19 @@ def kfold_logreg_accuracy(X, y, k=5, seed=2026):
     try:
         from sklearn.linear_model import LogisticRegression
         from sklearn.model_selection import StratifiedKFold
+        from sklearn.preprocessing import StandardScaler
         skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=seed)
         accs = []
         for train_idx, test_idx in skf.split(X, y):
+            # Standardize features per fold (fit scaler on train, apply to test).
+            # Hidden states from fp16 LLMs have wide-ranging magnitudes that
+            # trigger overflow in sklearn's matmul without scaling.
+            scaler = StandardScaler()
+            X_train = scaler.fit_transform(X[train_idx].astype(np.float32))
+            X_test = scaler.transform(X[test_idx].astype(np.float32))
             clf = LogisticRegression(max_iter=2000, C=1.0)
-            clf.fit(X[train_idx], y[train_idx])
-            accs.append(clf.score(X[test_idx], y[test_idx]))
+            clf.fit(X_train, y[train_idx])
+            accs.append(clf.score(X_test, y[test_idx]))
         return float(np.mean(accs)), float(np.std(accs))
     except ImportError:
         # closed-form ridge classifier (fallback)

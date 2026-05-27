@@ -1,0 +1,135 @@
+{
+  "task_name": "honesty",
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "layer": 7,
+  "n_pairs": 200,
+  "n_eval": 100,
+  "n_seeds": 3,
+  "seeds": [
+    2026,
+    1729,
+    4096
+  ],
+  "delta_vs_baseline": {
+    "mean": -0.010000000000000009,
+    "std": 0.0,
+    "values": [
+      -0.010000000000000009,
+      -0.010000000000000009,
+      -0.010000000000000009
+    ]
+  },
+  "delta_vs_random": {
+    "mean": -0.008666666666666675,
+    "std": 0.0023094010767585054,
+    "values": [
+      -0.010000000000000009,
+      -0.006000000000000005,
+      -0.010000000000000009
+    ]
+  },
+  "split_half_cos_mean": {
+    "mean": 0.9991922110319138,
+    "std": 0.0,
+    "values": [
+      0.9991922110319138,
+      0.9991922110319138,
+      0.9991922110319138
+    ]
+  },
+  "per_pair_variance": {
+    "mean": 0.038551270961761475,
+    "std": 0.0,
+    "values": [
+      0.038551270961761475,
+      0.038551270961761475,
+      0.038551270961761475
+    ]
+  },
+  "baseline_metric": {
+    "mean": 0.5,
+    "std": 0.0,
+    "values": [
+      0.5,
+      0.5,
+      0.5
+    ]
+  },
+  "steered_metric": {
+    "mean": 0.49,
+    "std": 0.0,
+    "values": [
+      0.49,
+      0.49,
+      0.49
+    ]
+  },
+  "random_metric_mean": {
+    "mean": 0.49866666666666665,
+    "std": 0.0023094010767585054,
+    "values": [
+      0.5,
+      0.496,
+      0.5
+    ]
+  },
+  "per_seed_reports": [
+    {
+      "seed": 2026,
+      "task_name": "honesty",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9991922110319138,
+      "split_half_cos_std": 0.00017286855376442487,
+      "per_pair_variance": 0.038551270961761475,
+      "baseline_metric": 0.5,
+      "steered_metric": 0.49,
+      "random_metric_mean": 0.5,
+      "random_metric_std": 0.0,
+      "delta_vs_baseline": -0.010000000000000009,
+      "delta_vs_random": -0.010000000000000009,
+      "seconds": 1596.1812419891357,
+      "notes": ""
+    },
+    {
+      "seed": 1729,
+      "task_name": "honesty",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9991922110319138,
+      "split_half_cos_std": 0.00017286855376442487,
+      "per_pair_variance": 0.038551270961761475,
+      "baseline_metric": 0.5,
+      "steered_metric": 0.49,
+      "random_metric_mean": 0.496,
+      "random_metric_std": 0.008000000000000007,
+      "delta_vs_baseline": -0.010000000000000009,
+      "delta_vs_random": -0.006000000000000005,
+      "seconds": 1599.9289820194244,
+      "notes": ""
+    },
+    {
+      "seed": 4096,
+      "task_name": "honesty",
+      "task_kind": "behavioral",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9991922110319138,
+      "split_half_cos_std": 0.00017286855376442487,
+      "per_pair_variance": 0.038551270961761475,
+      "baseline_metric": 0.5,
+      "steered_metric": 0.49,
+      "random_metric_mean": 0.5,
+      "random_metric_std": 0.006324555320336764,
+      "delta_vs_baseline": -0.010000000000000009,
+      "delta_vs_random": -0.010000000000000009,
+      "seconds": 1599.107488155365,
+      "notes": ""
+    }
+  ]
+}
