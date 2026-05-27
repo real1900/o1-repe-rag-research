@@ -374,10 +374,13 @@ variance. \emph{steered}: task metric after projecting $\bar d$
 out of layer-7 residual stream at every position. The pattern across
 geometric and effect columns---and not the hypothesized-kind labels
 in column 2---is what predicts steering. \emph{Seed stability:}
-$\Delta_{\text{base}}$ and $\Delta_{\text{rand}}$ are deterministic
-in the contrastive direction and vary only in the random controls;
-across 3 seeds $\{2026, 1729, 4096\}$ on the headline tasks,
-$\text{std}(\Delta_{\text{rand}}) \leq 0.014$ (multiseed run on M4).}
+$\Delta_{\text{base}}$ is fully deterministic (greedy decoding,
+fixed contrast set; $\text{std} = 0$ across seeds);
+$\Delta_{\text{rand}}$ varies only in the random-control vectors.
+Across 3 seeds $\{2026, 1729, 4096\}$ on all 7 headline tasks
+(refusal, sentiment, rag\_distractor, honesty,
+hallucination\_grounding, context\_faithfulness, persona),
+$\max \text{std}(\Delta_{\text{rand}}) = 0.014$.}
 \label{tab:results}
 \end{table*}
 

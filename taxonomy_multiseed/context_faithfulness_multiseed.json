@@ -1,0 +1,135 @@
+{
+  "task_name": "context_faithfulness",
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "layer": 7,
+  "n_pairs": 200,
+  "n_eval": 100,
+  "n_seeds": 3,
+  "seeds": [
+    2026,
+    1729,
+    4096
+  ],
+  "delta_vs_baseline": {
+    "mean": -0.375,
+    "std": 0.0,
+    "values": [
+      -0.375,
+      -0.375,
+      -0.375
+    ]
+  },
+  "delta_vs_random": {
+    "mean": -0.37566666666666676,
+    "std": 0.0020816659994660723,
+    "values": [
+      -0.378,
+      -0.3740000000000001,
+      -0.3750000000000001
+    ]
+  },
+  "split_half_cos_mean": {
+    "mean": 0.999982625246048,
+    "std": 0.0,
+    "values": [
+      0.999982625246048,
+      0.999982625246048,
+      0.999982625246048
+    ]
+  },
+  "per_pair_variance": {
+    "mean": 0.0010042786598205566,
+    "std": 0.0,
+    "values": [
+      0.0010042786598205566,
+      0.0010042786598205566,
+      0.0010042786598205566
+    ]
+  },
+  "baseline_metric": {
+    "mean": 0.88,
+    "std": 0.0,
+    "values": [
+      0.88,
+      0.88,
+      0.88
+    ]
+  },
+  "steered_metric": {
+    "mean": 0.505,
+    "std": 0.0,
+    "values": [
+      0.505,
+      0.505,
+      0.505
+    ]
+  },
+  "random_metric_mean": {
+    "mean": 0.8806666666666667,
+    "std": 0.0020816659994660723,
+    "values": [
+      0.883,
+      0.8790000000000001,
+      0.8800000000000001
+    ]
+  },
+  "per_seed_reports": [
+    {
+      "seed": 2026,
+      "task_name": "context_faithfulness",
+      "task_kind": "borderline",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.999982625246048,
+      "split_half_cos_std": 3.415689401203936e-06,
+      "per_pair_variance": 0.0010042786598205566,
+      "baseline_metric": 0.88,
+      "steered_metric": 0.505,
+      "random_metric_mean": 0.883,
+      "random_metric_std": 0.006782329983125274,
+      "delta_vs_baseline": -0.375,
+      "delta_vs_random": -0.378,
+      "seconds": 1378.7925491333008,
+      "notes": ""
+    },
+    {
+      "seed": 1729,
+      "task_name": "context_faithfulness",
+      "task_kind": "borderline",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.999982625246048,
+      "split_half_cos_std": 3.415689401203936e-06,
+      "per_pair_variance": 0.0010042786598205566,
+      "baseline_metric": 0.88,
+      "steered_metric": 0.505,
+      "random_metric_mean": 0.8790000000000001,
+      "random_metric_std": 0.009695359714832666,
+      "delta_vs_baseline": -0.375,
+      "delta_vs_random": -0.3740000000000001,
+      "seconds": 1358.5220868587494,
+      "notes": ""
+    },
+    {
+      "seed": 4096,
+      "task_name": "context_faithfulness",
+      "task_kind": "borderline",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.999982625246048,
+      "split_half_cos_std": 3.415689401203936e-06,
+      "per_pair_variance": 0.0010042786598205566,
+      "baseline_metric": 0.88,
+      "steered_metric": 0.505,
+      "random_metric_mean": 0.8800000000000001,
+      "random_metric_std": 0.005477225575051666,
+      "delta_vs_baseline": -0.375,
+      "delta_vs_random": -0.3750000000000001,
+      "seconds": 1360.4555649757385,
+      "notes": ""
+    }
+  ]
+}

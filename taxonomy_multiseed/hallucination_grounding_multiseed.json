@@ -1,0 +1,135 @@
+{
+  "task_name": "hallucination_grounding",
+  "model": "meta-llama/Llama-3.2-3B-Instruct",
+  "layer": 7,
+  "n_pairs": 200,
+  "n_eval": 100,
+  "n_seeds": 3,
+  "seeds": [
+    2026,
+    1729,
+    4096
+  ],
+  "delta_vs_baseline": {
+    "mean": -0.07,
+    "std": 0.0,
+    "values": [
+      -0.07,
+      -0.07,
+      -0.07
+    ]
+  },
+  "delta_vs_random": {
+    "mean": -0.06866666666666667,
+    "std": 0.0023094010767585054,
+    "values": [
+      -0.07,
+      -0.07,
+      -0.066
+    ]
+  },
+  "split_half_cos_mean": {
+    "mean": 0.9950940728187561,
+    "std": 0.0,
+    "values": [
+      0.9950940728187561,
+      0.9950940728187561,
+      0.9950940728187561
+    ]
+  },
+  "per_pair_variance": {
+    "mean": 0.4332873821258545,
+    "std": 0.0,
+    "values": [
+      0.4332873821258545,
+      0.4332873821258545,
+      0.4332873821258545
+    ]
+  },
+  "baseline_metric": {
+    "mean": 0.07,
+    "std": 0.0,
+    "values": [
+      0.07,
+      0.07,
+      0.07
+    ]
+  },
+  "steered_metric": {
+    "mean": 0.0,
+    "std": 0.0,
+    "values": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "random_metric_mean": {
+    "mean": 0.06866666666666667,
+    "std": 0.0023094010767585054,
+    "values": [
+      0.07,
+      0.07,
+      0.066
+    ]
+  },
+  "per_seed_reports": [
+    {
+      "seed": 2026,
+      "task_name": "hallucination_grounding",
+      "task_kind": "borderline",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9950940728187561,
+      "split_half_cos_std": 0.006050204685463215,
+      "per_pair_variance": 0.4332873821258545,
+      "baseline_metric": 0.07,
+      "steered_metric": 0.0,
+      "random_metric_mean": 0.07,
+      "random_metric_std": 0.00632455532033676,
+      "delta_vs_baseline": -0.07,
+      "delta_vs_random": -0.07,
+      "seconds": 1570.0100281238556,
+      "notes": ""
+    },
+    {
+      "seed": 1729,
+      "task_name": "hallucination_grounding",
+      "task_kind": "borderline",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9950940728187561,
+      "split_half_cos_std": 0.006050204685463215,
+      "per_pair_variance": 0.4332873821258545,
+      "baseline_metric": 0.07,
+      "steered_metric": 0.0,
+      "random_metric_mean": 0.07,
+      "random_metric_std": 0.0,
+      "delta_vs_baseline": -0.07,
+      "delta_vs_random": -0.07,
+      "seconds": 1573.3556747436523,
+      "notes": ""
+    },
+    {
+      "seed": 4096,
+      "task_name": "hallucination_grounding",
+      "task_kind": "borderline",
+      "n_pairs": 200,
+      "n_eval": 100,
+      "target_layer": 7,
+      "split_half_cos_mean": 0.9950940728187561,
+      "split_half_cos_std": 0.006050204685463215,
+      "per_pair_variance": 0.4332873821258545,
+      "baseline_metric": 0.07,
+      "steered_metric": 0.0,
+      "random_metric_mean": 0.066,
+      "random_metric_std": 0.00489897948556636,
+      "delta_vs_baseline": -0.07,
+      "delta_vs_random": -0.066,
+      "seconds": 1587.3088722229004,
+      "notes": ""
+    }
+  ]
+}
