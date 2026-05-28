@@ -99,48 +99,55 @@ def derive_direction(runner, task, layer, n_pairs=200):
 
 
 def decompose(direction, sae):
-    """Decompose direction over SAE features; return summary stats."""
-    # JumpReLU only activates for ALIGNED inputs (positive pre-activations).
-    # The steering direction may have either sign; we look at both directions
-    # and report the larger response.
-    z_pos = sae.encode(direction)
-    z_neg = sae.encode(-direction)
-    z_pos_abs = z_pos.abs().cpu().numpy()
-    z_neg_abs = z_neg.abs().cpu().numpy()
-    # Take the side with more total activation (the model presumably
-    # encodes the contrast in one consistent sign).
-    if z_pos_abs.sum() >= z_neg_abs.sum():
-        z = z_pos_abs
-        sign = "+"
-    else:
-        z = z_neg_abs
-        sign = "-"
+    """Decompose direction over SAE features; return summary stats.
 
-    # How concentrated is this decomposition? Use:
-    #   - count of features above 10% of peak
-    #   - top-20 features and their decoder magnitudes
-    #   - Gini coefficient as a continuous concentration measure
-    peak = z.max() if z.max() > 0 else 1e-10
-    n_features_significant = int((z > 0.1 * peak).sum())
-    n_features_active = int((z > 0).sum())
-    top20_idx = np.argsort(-z)[:20]
-    top20_mass = float(z[top20_idx].sum())
-    total_mass = float(z.sum())
+    Method: project the unit-norm steering direction onto each SAE
+    feature's decoder vector (W_dec[i, :]). This skips the JumpReLU
+    threshold and biases entirely -- biases are calibrated for
+    activation magnitudes (~50-200 norm in Gemma-2-9B residual stream),
+    not unit directions, so the JumpReLU saturates indiscriminately
+    when fed a unit vector.
+
+    The projection score |<d, W_dec[i]>| measures how much feature i
+    contributes if you decomposed d in the SAE's feature basis. High
+    score = direction aligns with feature i's residual-stream
+    representation. The geometry-of-features question is exactly this
+    cosine relationship; it does not require running JumpReLU.
+    """
+    d = direction.to(sae.device).float()
+    # Projection coefficients: signed cosine-like score onto each feature.
+    coefs = (d @ sae.W_dec.T).cpu().numpy()    # (n_features,)
+    abs_coefs = np.abs(coefs)
+    sign = "+" if coefs[np.argmax(abs_coefs)] >= 0 else "-"
+
+    # Concentration metrics on |coefs|:
+    peak = abs_coefs.max() if abs_coefs.max() > 0 else 1e-10
+    n_features_significant = int((abs_coefs > 0.1 * peak).sum())
+    n_features_active = int((abs_coefs > 0.01 * peak).sum())
+    top20_idx = np.argsort(-abs_coefs)[:20]
+    top20_mass = float(abs_coefs[top20_idx].sum())
+    total_mass = float(abs_coefs.sum())
     top20_fraction = top20_mass / max(total_mass, 1e-10)
 
-    # Gini: 1 - sum(squared shares). 0 = uniform, ~1 = single feature dominates.
-    shares = z / max(z.sum(), 1e-10)
-    gini = float((shares ** 2).sum())
+    # Concentration via squared-shares (Herfindahl-style; 1/n=uniform,
+    # 1=fully concentrated). Renamed from "gini" because squared shares
+    # is the Herfindahl index, not the Gini coefficient.
+    shares = abs_coefs / max(abs_coefs.sum(), 1e-10)
+    herfindahl = float((shares ** 2).sum())
+    # Effective number of features (inverse Herfindahl) -- a continuous
+    # alternative to a hard threshold.
+    effective_n = float(1.0 / herfindahl) if herfindahl > 0 else float("inf")
 
     return dict(
         sign=sign,
         n_features_active=n_features_active,
         n_features_significant=n_features_significant,
         top20_features=[int(i) for i in top20_idx],
-        top20_activations=[float(z[i]) for i in top20_idx],
+        top20_coefs=[float(coefs[i]) for i in top20_idx],
         top20_fraction_of_total=top20_fraction,
-        gini=gini,
-        peak_activation=float(peak),
+        herfindahl=herfindahl,
+        effective_n_features=effective_n,
+        peak_coef=float(peak),
     )
 
 
@@ -195,9 +202,11 @@ def main():
         print(f"  sign: {decomp['sign']}")
         print(f"  n_features_significant (above 0.1*peak): "
               f"{decomp['n_features_significant']}")
-        print(f"  top-20 fraction of total activation: "
+        print(f"  top-20 fraction of total |coef|: "
               f"{decomp['top20_fraction_of_total']:.3f}")
-        print(f"  Gini (concentration): {decomp['gini']:.3f}")
+        print(f"  Herfindahl (concentration): {decomp['herfindahl']:.4f}")
+        print(f"  Effective n features (1/H): "
+              f"{decomp['effective_n_features']:.1f}")
         print(f"  ({decomp['seconds']:.0f}s)")
 
     summary = dict(

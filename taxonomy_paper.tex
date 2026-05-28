@@ -135,6 +135,12 @@ $r(\text{probe acc}, |\Delta_{\text{rand}}|) = -0.176$ while
 $r(\bar{\cos}\cdot\sigma, |\Delta_{\text{rand}}|) = +0.436$.
 Steering predicts behavior change; probes predict only
 separability.
+\item \textbf{Mechanism via Gemma-Scope SAE.} Per-task directions
+on Gemma-2-9B-Instruct layer 9 decompose over the SAE feature
+dictionary at $r(\text{n features}, \sigma) = +0.75$: structural-
+asymmetry tasks collapse onto $\sim$220 features dominated by a
+single one (peak coef $\sim$0.65); high-$\sigma$ tasks spread
+across 1900--3900 features.
 \item A demonstration that the conventional behavioral
 vs.~content-specific task taxonomy is \emph{not} predictive of
 steering: a content-specific task (rag\_distractor) steers as
@@ -655,23 +661,16 @@ second predictive condition for additive-CAA effects could close it.
 \label{sec:discussion}
 % ===========================================================================
 
-\paragraph{Why high variance is the right signal, not low.}
-The naive ``low-variance = clean axis'' intuition is that
-consistent per-pair directions indicate a stable signal. Our data
-shows that this consistency, when it arises from a very tightly
-controlled contrast, indicates the opposite: the direction has
-collapsed onto a token-level feature that does not propagate to
-behavior. Honesty's pairs differ only in one word
-(``honest''/``dishonest''); the resulting direction encodes that
-single-token distinction with extremely low variance ($\sigma =
-0.039$), but ablating it does not change behavior on the held-out
-statements because the model does not strongly condition on the
-framing word. Refusal's pairs differ across many tokens and many
-examples (varied AdvBench harmful instructions vs.~varied Alpaca
-harmless instructions); the per-pair directions span a wide range
-($\sigma = 0.626$), but they share a common harmful-vs-harmless
-axis whose mean is stable across subsamples ($\bar{\cos} = 0.998$).
-Ablating that axis crashes refusal.
+\paragraph{Mechanism via SAE decomposition.}
+Projecting per-task directions onto the Gemma-Scope JumpReLU SAE
+(Gemma-2-9B-it, layer 9, width 16k, $\bar{L_0}{=}47$), the number
+of SAE features above $0.1 \times$ peak coefficient correlates with
+$\sigma$ at $r = +0.75$ across the 12 tasks. Structural-asymmetry
+tasks collapse onto $\sim$220 SAE features with peak coef $\sim$0.65
+(a single dominant ``prefix-presence'' feature); high-$\sigma$ tasks
+spread across 1900--3900 features with peak coef $\sim$0.3. Gemma
+because no public SAE exists for Llama-3.2-3B; cross-family
+geometric invariance ($r \geq +0.998$) lets the mechanism transfer.
 
 \paragraph{Off-target perturbation $\neq$ steering.}
 fact\_override is the third exception. Its split-half cosine is
