@@ -41,6 +41,14 @@ def main():
                         help="Number of random-direction control vectors.")
     parser.add_argument("--output-dir", default="taxonomy_reports")
     parser.add_argument("--seed", type=int, default=2026)
+    parser.add_argument("--quantize", default=None,
+                        choices=[None, "4bit_hqq"],
+                        help="Quantization scheme. 4bit_hqq uses HQQ for "
+                             "Apple-Silicon-compatible 4-bit (lets 32B "
+                             "fit in 48GB unified memory).")
+    parser.add_argument("--skip-existing", action="store_true",
+                        help="Skip a task if its JSON report already "
+                             "exists. Enables resumable runs after crashes.")
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir)
@@ -55,12 +63,23 @@ def main():
         if missing:
             print(f"WARNING: unknown task names skipped: {sorted(missing)}")
 
+    # Resumable runs: skip tasks whose reports already exist.
+    if args.skip_existing:
+        before = len(task_classes)
+        task_classes = [t for t in task_classes
+                        if not (out_dir / f"{t.name}.json").exists()]
+        skipped = before - len(task_classes)
+        if skipped:
+            print(f"--skip-existing: skipping {skipped} task(s) already "
+                  f"in {out_dir}/")
+
     if not task_classes:
-        raise SystemExit("No tasks to run.")
+        print(f"Nothing to do (all tasks have reports in {out_dir}/).")
+        return
 
     print(f"Running {len(task_classes)} task(s) on {args.model} "
           f"at layer {args.layer}, n_pairs={args.n_pairs}, n_eval={args.n_eval}")
-    runner = LlamaModelRunner(model_id=args.model)
+    runner = LlamaModelRunner(model_id=args.model, quantize=args.quantize)
 
     for task_class in task_classes:
         task = task_class()

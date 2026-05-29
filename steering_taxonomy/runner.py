@@ -70,19 +70,47 @@ class LlamaModelRunner:
     def __init__(self, model_id: str = "meta-llama/Llama-3.2-3B-Instruct",
                  dtype: torch.dtype = torch.float16,
                  device: str | None = None,
-                 max_input_tokens: int = 1024):
+                 max_input_tokens: int = 1024,
+                 quantize: str | None = None):
+        """
+        quantize: None for full-precision (default); "4bit_hqq" to load
+            via HQQ 4-bit (lets a 32B model fit Apple Silicon 48GB by
+            cutting weight size ~4x). Quantization preserves the
+            `model.model.layers` module structure so forward hooks still
+            attach as usual.
+        """
         if device is None:
             device = ("cuda" if torch.cuda.is_available()
                       else ("mps" if torch.backends.mps.is_available() else "cpu"))
         self.device = device
         self.model_id = model_id
         self.max_input_tokens = max_input_tokens
+        self.quantize = quantize
 
-        print(f"[runner] loading {model_id} on {device} ...")
+        print(f"[runner] loading {model_id} on {device} "
+              f"(quantize={quantize}) ...")
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-        self.model = AutoModelForCausalLM.from_pretrained(model_id, dtype=dtype).to(device)
+
+        if quantize == "4bit_hqq":
+            # HQQ workflow: load fp16 on CPU, quantize in-place, move to MPS.
+            # bitsandbytes 4-bit is CUDA-only; HQQ is the cross-platform
+            # alternative that works on Apple Silicon.
+            from hqq.models.hf.base import AutoHQQHFModel
+            from hqq.core.quantize import BaseQuantizeConfig
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_id, dtype=torch.float16, device_map="cpu"
+            )
+            qcfg = BaseQuantizeConfig(nbits=4, group_size=64, axis=1)
+            AutoHQQHFModel.quantize_model(
+                self.model, quant_config=qcfg,
+                compute_dtype=torch.float16, device=device,
+            )
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_id, dtype=dtype
+            ).to(device)
         self.model.eval()
         self.layers = self.model.model.layers
         self.d_model = self.model.config.hidden_size
