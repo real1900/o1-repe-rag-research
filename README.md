@@ -41,6 +41,37 @@ $\bar{\cos}$ and per-pair angular variance $\sigma$) and an **empirical** axis
 ($\Delta$ vs baseline, $\Delta$ vs random-direction control) — and derives a
 three-axis predictive rule.
 
+### Method at a glance
+
+```mermaid
+flowchart LR
+    A["200 contrastive<br/>pairs (x⁺, x⁻)"] --> B["Forward pass<br/>at layer ℓ"]
+    B --> C["per-pair direction<br/>dᵢ = h(x⁺) − h(x⁻)"]
+    C --> D["geometric features:<br/><b>cos̄</b>, <b>σ</b>"]
+    C --> E["mean direction d̄"]
+    E --> F["project d̄ out of<br/>residual stream"]
+    F --> G["steered generation"]
+    G --> H["empirical features:<br/>Δ vs baseline,<br/>Δ vs random control"]
+
+    D --> R{"cos̄ ≥ 0.7<br/>AND σ ≥ 0.3?"}
+    R -->|yes| K(["✅ predicts steer"])
+    R -->|no| S{"structurally<br/>asymmetric<br/>contrast?"}
+    S -->|yes| K
+    S -->|no| N(["⛔ predicts no"])
+
+    H -. validates .-> K
+    H -. validates .-> N
+
+    style K fill:#86efac,stroke:#16a34a,color:#000
+    style N fill:#fca5a5,stroke:#dc2626,color:#000
+    style D fill:#bfdbfe,stroke:#1d4ed8,color:#000
+    style H fill:#fde68a,stroke:#ca8a04,color:#000
+```
+
+*Cheap to compute — the geometric features cost only forward passes on
+the contrast pair set, no generation. A practitioner can run the diagnostic
+in seconds before committing GPU time to a full steered evaluation.*
+
 ### Headline results
 
 | Claim | Number |
@@ -53,6 +84,33 @@ three-axis predictive rule.
 | Geometric composite $\bar{\cos} \cdot \sigma$ correlation | **+0.436** |
 | Seed-stability across 3 seeds × 7 tasks, max std of $\Delta_{\text{rand}}$ | **0.014** |
 | Mechanism: SAE-feature count vs $\sigma$ on Gemma-2-9B + Gemma-Scope | **r = +0.75** |
+
+### Per-task scorecard (Llama-3.2-3B, layer 7)
+
+The full 3-axis rule applied to every task in the corpus:
+
+| Task | Kind | $\bar{\cos}$ | $\sigma$ | Rule | Observed | ✓ |
+|---|---|---|---|---|---|---|
+| `refusal` | 🧠 behavioral | 1.000 | 0.626 | 🟢 steer | 🟢 steer | ✅ |
+| `sentiment` | 🧠 behavioral | 0.752 | 0.823 | 🟢 steer | 🟢 steer | ✅ |
+| `rag_distractor` | 📄 content-specific | 0.988 | 0.747 | 🟢 steer | 🟢 steer | ✅ |
+| `hallucination_grounding` | ❓ borderline | 0.995 | 0.433 | 🟢 steer | 🟢 steer | ✅ |
+| `context_faithfulness` | ❓ borderline | 1.000 | 0.001 | 🟢 steer\* | 🟢 steer | ✅ |
+| `persona` | ❓ borderline | 1.000 | 0.004 | 🟢 steer\* | 🟢 steer | ✅ |
+| `honesty` | 🧠 behavioral | 0.999 | 0.039 | 🔴 no | 🔴 no | ✅ |
+| `sycophancy` | 🧠 behavioral | 1.000 | 0.016 | 🔴 no | 🔴 no | ✅ |
+| `politeness` | ❓ borderline | 1.000 | 0.028 | 🔴 no | 🔴 no | ✅ |
+| `topic_suppression` | 📄 content-specific | 1.000 | 0.001 | 🔴 no | 🔴 no | ✅ |
+| `truthfulness` | 🧠 behavioral | 0.576 | 0.892 | 🔴 no | 🔴 no | ✅ |
+| `fact_override` | 📄 content-specific | 0.122 | 0.921 | 🔴 no | 🟢 steer | ❌ |
+
+**11/12 = 91.7%** in-sample on the 3-axis rule (geometry + asymmetry).
+The 2-axis geometry-only rule gets 9/12 (the paper's headline);
+asymmetry rescues `context_faithfulness` and `persona` (marked with \*).
+`fact_override` is the lone false negative across all 4 models —
+its split-half cosine is essentially noise ($0.122 \pm 0.644$) yet
+ablation moves the metric off-target (direction-specific perturbation,
+not goal-directed steering).
 
 ### The geometric features are a property of the contrast, not the model
 
