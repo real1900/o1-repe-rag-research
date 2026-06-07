@@ -1,5 +1,7 @@
 # When Activation Steering Works: A Geometric Predictor Across 12 Tasks and Two Model Families
 
+<img src="jhu_logo.png" alt="Johns Hopkins University" width="280" />
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![Built on TDC](https://img.shields.io/badge/Built_on-TDC-orange.svg)]()
