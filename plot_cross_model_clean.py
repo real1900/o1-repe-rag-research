@@ -101,10 +101,11 @@ def main():
                  "property of the contrast, not the model",
                  fontsize=12.5, y=1.00, fontweight="bold")
     fig.tight_layout()
-    out = "docs/img/cross_model.png"
     Path("docs/img").mkdir(parents=True, exist_ok=True)
-    fig.savefig(out, dpi=170, bbox_inches="tight")
-    print(f"Wrote {out}")
+    for out in ("docs/img/cross_model.png",
+                "cross_model_4models.pdf"):
+        fig.savefig(out, dpi=170, bbox_inches="tight")
+        print(f"Wrote {out}")
 
 
 if __name__ == "__main__":
