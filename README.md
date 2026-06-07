@@ -4,7 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
-[![Built on TDC](https://img.shields.io/badge/Built_on-TDC-orange.svg)]()
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.4+-EE4C2C.svg?logo=pytorch&logoColor=white)](https://pytorch.org/)
+[![🤗 Transformers](https://img.shields.io/badge/🤗_Transformers-4.42+-yellow.svg)](https://github.com/huggingface/transformers)
 [![arXiv](https://img.shields.io/badge/arXiv-coming_soon-b31b1b.svg)]()
 [![Models](https://img.shields.io/badge/models-Llama_·_Qwen_·_Gemma-yellow.svg)]()
 [![Tasks](https://img.shields.io/badge/tasks-12-green.svg)]()
