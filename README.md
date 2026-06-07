@@ -14,7 +14,7 @@
 
 Code, task corpus, and per-task reports for the steering-taxonomy paper.
 
-## TL;DR
+## Summary
 
 Activation steering produces striking results on some tasks (refusal, sentiment)
 and quietly fails on others. We characterize 12 tasks geometrically
