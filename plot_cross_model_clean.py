@@ -1,15 +1,17 @@
-"""Clean README-style cross-model agreement plot.
+"""Clean cross-model agreement plot for README + paper.
 
-The labeled version (`plot_cross_model.py` -> `cross_model_4models.pdf`)
-is dense by design so a reader can identify every task in the paper.
-That gets unreadable at README width where many points pile up at
-cos~=1.0 and var~=0.
+Design: strip plot, one row per task, four colored markers per row
+(one per model). Visually: short tight cluster in each row = all
+models agree on that task's geometric feature.
 
-This version drops the per-point labels, uses bigger markers, and
-labels only `fact_override` (the conspicuous outlier at low cos).
-The visual message remains: every point sits on the y=x diagonal.
+Headline message reads instantly without legend reading:
+  "every row's markers stack on top of each other"
+  ==> the (cos, sigma) signature is a property of the contrast,
+      not of the model.
 
-Output: docs/img/cross_model.png
+Output:
+  docs/img/cross_model.png   -- 170 DPI raster, for the GitHub README
+  cross_model_4models.pdf    -- vector, for the paper builds
 """
 from __future__ import annotations
 
@@ -18,16 +20,15 @@ import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 
-REPORT_DIRS = {
-    "Llama-3B (layer 7)":  ("taxonomy_reports",          "#1f77b4", "o", 110),
-    "Qwen-3B (layer 9)":   ("taxonomy_reports_qwen",     "#d62728", "o", 110),
-    "Llama-1B (layer 4)":  ("taxonomy_reports_llama1b",  "#1f77b4", "^", 120),
-    "Qwen-7B (layer 7)":   ("taxonomy_reports_qwen7b",   "#d62728", "s", 110),
+MODELS = {
+    "Llama-3.2-3B":  ("taxonomy_reports",          "#1f77b4", "o"),
+    "Llama-3.2-1B":  ("taxonomy_reports_llama1b",  "#56a3ff", "^"),
+    "Qwen2.5-3B":    ("taxonomy_reports_qwen",     "#d62728", "o"),
+    "Qwen2.5-7B":    ("taxonomy_reports_qwen7b",   "#ff8c8c", "s"),
 }
-ANCHOR = "Llama-3B (layer 7)"
-OUTLIER = "fact_override"  # only point worth annotating; lives at low cos
 
 
 def load_reports(reports_dir):
@@ -39,68 +40,86 @@ def load_reports(reports_dir):
     return out
 
 
+def make_strip_panel(ax, feat, all_data, task_order, feature_label):
+    """Per-task strip plot: each task row has 4 markers (one per model)."""
+    for y_idx, task in enumerate(task_order):
+        # light horizontal guide line per task
+        ax.axhline(y=y_idx, xmin=0, xmax=1, color="lightgray",
+                   linewidth=0.5, zorder=0)
+        for model_label, (color, marker, value) in all_data[task].items():
+            ax.scatter([value], [y_idx],
+                       s=110, color=color, marker=marker,
+                       edgecolor="black", linewidths=0.9,
+                       alpha=0.92, zorder=3)
+    ax.set_yticks(range(len(task_order)))
+    ax.set_yticklabels(task_order, fontsize=10)
+    ax.set_xlabel(feature_label, fontsize=11.5)
+    ax.set_xlim(-0.03, 1.05)
+    ax.set_ylim(-0.7, len(task_order) - 0.3)
+    ax.grid(axis="x", alpha=0.3)
+    ax.invert_yaxis()  # so the visually-most-extreme task is on top
+
+
 def main():
+    # Load all models. Fall back gracefully if some directories are absent.
     available = {}
-    for label, (d, _, _, _) in REPORT_DIRS.items():
+    for label, (d, color, marker) in MODELS.items():
         if Path(d).exists():
             reps = load_reports(d)
             if reps:
-                available[label] = reps
-    anchor_reps = available[ANCHOR]
-    others = [k for k in available if k != ANCHOR]
+                available[label] = (reps, color, marker)
 
-    fig, (ax_a, ax_b) = plt.subplots(1, 2, figsize=(13, 5.8))
-    outlier_annotated = False  # only annotate fact_override once total
-    for ax, feat, name in [(ax_a, "split_half_cos_mean",
-                            r"split-half cosine $\bar{\cos}$"),
-                           (ax_b, "per_pair_variance",
-                            r"per-pair variance $\sigma$")]:
-        # Shaded +/- 0.05 band first so it's behind everything
-        ax.fill_between([0, 1.05], [-0.05, 1.00], [0.05, 1.10],
-                        color="lightgray", alpha=0.4, zorder=0,
-                        label=r"$\pm$0.05 agreement band")
-        # Diagonal
-        ax.plot([0, 1.05], [0, 1.05], color="dimgray",
-                linestyle="--", linewidth=1.0, zorder=1, label="y = x")
-        # Per-model scatter
-        for label in others:
-            _, color, marker, size = REPORT_DIRS[label]
-            xs, ys, names = [], [], []
-            for task, anchor_row in anchor_reps.items():
-                if task not in available[label]:
-                    continue
-                xs.append(anchor_row[feat])
-                ys.append(available[label][task][feat])
-                names.append(task)
-            ax.scatter(xs, ys, s=size, color=color, marker=marker,
-                       edgecolor="black", linewidths=0.9,
-                       label=label, alpha=0.78, zorder=3)
-            # Only label fact_override on the cos panel, only once total
-            # across all (model, panel) iterations. It's the visual outlier;
-            # everyone else sits on the diagonal.
-            if feat == "split_half_cos_mean" and not outlier_annotated:
-                for xi, yi, ni in zip(xs, ys, names):
-                    if ni == OUTLIER:
-                        ax.annotate(ni, xy=(xi, yi),
-                                    xytext=(15, 0),
-                                    textcoords="offset points",
-                                    fontsize=9.5, alpha=0.95,
-                                    fontstyle="italic", fontweight="bold")
-                        outlier_annotated = True
-                        break
-        ax.set_xlabel(f"{name} on {ANCHOR}", fontsize=10.5)
-        ax.set_ylabel(f"{name} on other model", fontsize=10.5)
-        ax.set_xlim(-0.02, 1.05)
-        ax.set_ylim(-0.02, 1.05)
-        ax.grid(alpha=0.25)
-        ax.set_aspect("equal")
-        if ax is ax_a:
-            ax.legend(loc="lower right", fontsize=8.5, framealpha=0.94)
+    # Collect data: per task, per model, the cos and var values.
+    all_tasks = sorted({t for label, (reps, _, _) in available.items()
+                        for t in reps})
 
-    fig.suptitle("Cross-model agreement: the geometric features are a "
-                 "property of the contrast, not the model",
-                 fontsize=12.5, y=1.00, fontweight="bold")
-    fig.tight_layout()
+    def collect(feat):
+        d = {}
+        for task in all_tasks:
+            d[task] = {}
+            for label, (reps, color, marker) in available.items():
+                if task in reps:
+                    d[task][label] = (color, marker, reps[task][feat])
+        return d
+
+    cos_data = collect("split_half_cos_mean")
+    var_data = collect("per_pair_variance")
+
+    # Sort tasks once: by mean cos across models, descending
+    # (high agreement tasks at top, fact_override at bottom)
+    def mean_cos(task):
+        vals = [v[2] for v in cos_data[task].values()]
+        return -np.mean(vals) if vals else 0.0
+    task_order = sorted(all_tasks, key=mean_cos)
+
+    fig, (ax_a, ax_b) = plt.subplots(
+        1, 2, figsize=(13, 5.2), sharey=True,
+        gridspec_kw={"wspace": 0.05})
+    make_strip_panel(ax_a, "split_half_cos_mean", cos_data, task_order,
+                     r"split-half cosine  $\bar{\cos}$")
+    make_strip_panel(ax_b, "per_pair_variance", var_data, task_order,
+                     r"per-pair variance  $\sigma$")
+
+    # One shared legend at the bottom -- outside the data
+    handles = []
+    for label, (color, marker) in [(l, (c, m)) for l, (_, c, m) in MODELS.items()]:
+        if label in available:
+            from matplotlib.lines import Line2D
+            handles.append(Line2D([], [], marker=marker, color="none",
+                                  markerfacecolor=color,
+                                  markeredgecolor="black",
+                                  markersize=10, label=label))
+    fig.legend(handles=handles, loc="lower center", ncol=4,
+               fontsize=10.5, frameon=False,
+               bbox_to_anchor=(0.5, -0.08))
+
+    fig.suptitle(
+        "Cross-model agreement: each task's four markers stack on top of "
+        "each other\n"
+        r"$\Rightarrow$ the $(\bar{\cos}, \sigma)$ signature is a property "
+        r"of the contrast, not of the model",
+        fontsize=12, y=1.02)
+
     Path("docs/img").mkdir(parents=True, exist_ok=True)
     for out in ("docs/img/cross_model.png",
                 "cross_model_4models.pdf"):
