@@ -14,9 +14,7 @@ All four PDFs build clean from the same `taxonomy_paper.tex` source, adapted to 
 ### 1. arXiv (DO THIS FIRST — establishes priority on the LOO + SAE finding)
 
 **Pre-check before posting:**
-- Verify the GitHub URL in the paper (Reproducibility section) matches a real public repo you control:
-  - Current placeholder: `https://github.com/real1900/steering-taxonomy`
-  - If repo doesn't exist yet, create it before submitting OR edit the URL to point to the existing `o1-repe-rag-research` repo with a path
+- GitHub URL in the paper (Reproducibility section): `https://github.com/real1900/o1-repe-rag-research` — this is your existing real repo. Make sure it's set to **public** before posting (GitHub → Settings → Danger Zone → Change visibility).
 - Verify author name/affiliation/email at top of paper match what you want shown publicly
 
 **Submit:**
